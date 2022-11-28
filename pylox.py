@@ -12,7 +12,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="pylox",
         description="PyLox Interpreter",
-        epilog="PyLox is based off Lox from 'Crafting Intrepreters' written by Bob Nystrom",
+        epilog="PyLox is based on the Lox language from 'Crafting Intrepreters' written by Bob Nystrom",
     )
 
     parser.add_argument("-s", "--script", action="store_true", help="'.lox' script to interpret")
