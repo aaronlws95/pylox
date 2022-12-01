@@ -1,8 +1,9 @@
-import sys
 import argparse
-
+import sys
 from pathlib import Path
-from token_type import TokenType
+
+from utils.scanner import Scanner
+from utils.token_type import TokenType
 
 
 def parse_args() -> argparse.Namespace:
@@ -15,61 +16,73 @@ def parse_args() -> argparse.Namespace:
         epilog="PyLox is based on the Lox language from 'Crafting Intrepreters' written by Bob Nystrom",
     )
 
-    parser.add_argument("-s", "--script", action="store_true", help="'.lox' script to interpret")
+    parser.add_argument("-s", "--script", default=None, type=str, help="'.lox' script to interpret")
 
     return parser.parse_args()
 
 
 class PyLox:
-    def __init__(self):
-        self.hadError = False
+    hadError = False
 
-    def run_prompt(self) -> None:
+    @staticmethod
+    def run_prompt() -> None:
+        """
+        Run in REPL mode
+        """
         while True:
             try:
                 line = input("> ")
                 if line == "quit":
                     break
-                self.run(line)
-                self.hadError = False
+                PyLox.run(line)
+                hadError = False
             except EOFError:
                 break
 
-    def run_file(self, path: Path):
+    @staticmethod
+    def run_file(path: Path):
+        """
+        Run code from file
+        """
         with open(path, "rb") as f:
             while byte := f.read(1):
-                self.run(byte.decode("utf-8"))
-                if self.hadError:
+                PyLox.run(byte.decode("utf-8"))
+                if hadError:
                     sys.exit(65)
 
-    def run(self, source: str) -> None:
+    @staticmethod
+    def run(source: str) -> None:
         """
         Run interpreter on a source line
         """
-        scanner = Scanner()
+        scanner = Scanner(PyLox, source)
         tokens = scanner.scan_tokens()
 
         for token in tokens:
             print(token)
 
-    def error(self, line: int, message: str) -> None:
+    @staticmethod
+    def error(line: int, message: str) -> None:
         """
         Report error
         """
-        self.report(line, "", message)
+        PyLox.report(line, "", message)
 
-    def report(self, line: int, where: str, message, str) -> None:
+    @staticmethod
+    def report(line: int, where: str, message: str) -> None:
         """
         Print an error message
         """
 
         print(f"[line {line}] Error {where} : {message}")
-        self.hadError = True
+
+        hadError = True
 
 
 if __name__ == "__main__":
     args = parse_args()
 
-    x = TokenType.LEFT_PAREN
-
-    # if args.script:
+    if args.script is not None:
+        PyLox.run_file(Path(args.script))
+    else:
+        PyLox.run_prompt()
