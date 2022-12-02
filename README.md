@@ -16,3 +16,7 @@ coverage report -m # check coverage
 
 ## Requirements
 - Python 3.10
+
+```bash
+pip install -r requirements.txt
+```

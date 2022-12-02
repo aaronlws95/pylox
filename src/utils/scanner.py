@@ -1,3 +1,5 @@
+from typing import List
+
 from utils.token import Token
 from utils.token_type import TokenType
 
@@ -7,17 +9,17 @@ class Scanner:
     Scans the source code and fills a list of tokens ending with EOF
     """
 
-    def __init__(self, interpreter, source):
+    def __init__(self, interpreter, source: str):
         """
         :param interpreter: Interpreter e.g. PyLox
         :param source: Source code to scan
         """
         self._interpreter = interpreter
-        self._source = source
-        self._tokens = []
-        self._start = 0
-        self._current = 0
-        self._line = 1
+        self._source: str = source
+        self._tokens: List[TokenType] = []
+        self._start: int = 0
+        self._current: int = 0
+        self._line: int = 1
 
     def scan_tokens(self):
         """
@@ -29,12 +31,6 @@ class Scanner:
 
         self._tokens.append(Token(TokenType.EOF, "", None, self._line))
         return self._tokens
-
-    def _is_at_end(self):
-        """
-        Check if we have reached the end of the source code
-        """
-        return self._current >= len(self._source)
 
     def _scan_token(self):
         """
@@ -59,10 +55,10 @@ class Scanner:
         elif c == '"':
             self._add_string()
         # Number literal
-        elif self._is_digit(c):
+        elif Scanner._is_digit(c):
             self._add_number()
         # Identifier
-        elif self._is_alpha(c):
+        elif Scanner._is_alpha(c):
             self._add_identifier()
         # Empty space
         elif c == " " or c == "\t" or c == "\r":
@@ -70,14 +66,20 @@ class Scanner:
         else:
             self._interpreter.error(self._line, f"Unexpected character: {c}")
 
+    def _is_at_end(self):
+        """
+        Check if we have reached the end of the source code
+        """
+        return self._current >= len(self._source)
+
     def _add_string(self):
         """
         Add string to tokens
         """
         while self._peek() != '"' and not self._is_at_end():
-            if self._peek() != "\n":
+            if self._peek() == "\n":
                 self._line += 1
-                self._advance()
+            self._advance()
 
         if self._is_at_end():
             self._interpreter.error(self._line, "Unterminated string")
@@ -93,12 +95,12 @@ class Scanner:
         """
         Add number to tokens
         """
-        while self._is_digit(self._peek()):
+        while Scanner._is_digit(self._peek()):
             self._advance()
 
-        if self._peek() == "." and self._is_digit(self._peek_next()):
+        if self._peek() == "." and Scanner._is_digit(self._peek_next()):
             self._advance()
-            if self._is_digit(self._peek()):
+            while Scanner._is_digit(self._peek()):
                 self._advance()
 
         self._add_token(TokenType.NUMBER, float(self._source[self._start : self._current]))
@@ -107,6 +109,10 @@ class Scanner:
         """
         Add keyword if current lexeme matches keyword otherwise add identifier to tokens
         """
+
+        while Scanner._is_alphanumeric((self._peek())):
+            self._advance()
+
         text = self._source[self._start : self._current]
 
         token_type = None
@@ -162,20 +168,23 @@ class Scanner:
         text = self._source[self._start : self._current]
         self._tokens.append(Token(token_type, text, literal, self._line))
 
-    def _is_digit(self, c: str):
+    @staticmethod
+    def _is_digit(c: str):
         """
         Check if c is a digit 0...9
         """
         return c >= "0" and c <= "9"
 
-    def _is_alpha(self, c: str):
+    @staticmethod
+    def _is_alpha(c: str):
         """
         Check if c is an alphabet or underscore
         """
         return (c >= "a" and c <= "z") or (c >= "A" and c <= "Z") or c == "_"
 
-    def _is_alphanumeric(self, c: str):
+    @staticmethod
+    def _is_alphanumeric(c: str):
         """
         Check if c is an alphabet, underscore, or a digit
         """
-        return _is_alpha(c) or _is_digit(c)
+        return Scanner._is_alpha(c) or Scanner._is_digit(c)

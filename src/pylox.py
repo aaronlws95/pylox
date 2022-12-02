@@ -44,11 +44,10 @@ class PyLox:
         """
         Run code from file
         """
-        with open(path, "rb") as f:
-            while byte := f.read(1):
-                PyLox.run(byte.decode("utf-8"))
-                if hadError:
-                    sys.exit(65)
+        with open(path, "r") as f:
+            PyLox.run(f.read())
+            if hadError:
+                sys.exit(65)
 
     @staticmethod
     def run(source: str) -> None:
