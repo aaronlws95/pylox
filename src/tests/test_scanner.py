@@ -1,10 +1,11 @@
+import io
 import unittest
 import unittest.mock
-import io
+
+from pylox import PyLox
 from utils.scanner import Scanner
 from utils.token import Token
 from utils.token_type import TokenType
-from pylox import PyLox
 
 
 class TestScanner(unittest.TestCase):
