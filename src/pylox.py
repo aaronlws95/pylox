@@ -4,7 +4,8 @@ from pathlib import Path
 
 from utils.scanner import Scanner
 from utils.token_type import TokenType
-
+from utils.parser import Parser
+from utils.ast_printer import AstPrinter
 
 def parse_args() -> argparse.Namespace:
     """
@@ -22,7 +23,7 @@ def parse_args() -> argparse.Namespace:
 
 
 class PyLox:
-    hadError = False
+    _had_error = False
 
     @staticmethod
     def run_prompt() -> None:
@@ -35,7 +36,7 @@ class PyLox:
                 if line == "quit":
                     break
                 PyLox.run(line)
-                hadError = False
+                PyLox._had_error = False
             except EOFError:
                 break
 
@@ -46,7 +47,7 @@ class PyLox:
         """
         with open(path, "r") as f:
             PyLox.run(f.read())
-            if hadError:
+            if PyLox._had_error:
                 sys.exit(65)
 
     @staticmethod
@@ -56,16 +57,31 @@ class PyLox:
         """
         scanner = Scanner(PyLox, source)
         tokens = scanner.scan_tokens()
+        parser = Parser(PyLox, tokens)
+        expression = parser.parse()
 
-        for token in tokens:
-            print(token)
+        if PyLox._had_error:
+            return
+
+        ast_printer = AstPrinter()
+        print(ast_printer.print(expression))
 
     @staticmethod
-    def error(line: int, message: str) -> None:
+    def error_line(line: int, message: str) -> None:
         """
-        Report error
+        Report error at a given line
         """
         PyLox.report(line, "", message)
+
+    @staticmethod
+    def error_token(token, message):
+        """
+        Report error when parsing a token
+        """
+        if token.token_type == TokenType.EOF:
+            PyLox.report(token.line, " at end", message)
+        else:
+            PyLox.report(token.line, " at '" + token.lexeme, message)
 
     @staticmethod
     def report(line: int, where: str, message: str) -> None:
@@ -75,7 +91,7 @@ class PyLox:
 
         print(f"[line {line}] Error {where} : {message}")
 
-        hadError = True
+        PyLox._had_error = True
 
 
 if __name__ == "__main__":

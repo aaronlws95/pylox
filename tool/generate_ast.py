@@ -1,3 +1,7 @@
+"""
+Script to generate expr.py. We use this to ease adding expr types to the Abstract Syntax Tree (AST).
+"""
+
 import argparse
 from pathlib import Path
 from typing import List
@@ -16,7 +20,7 @@ def parse_args() -> argparse.Namespace:
 
 def define_ast(out_dir: str, base_name: str, types: List[str]):
     """
-    Output the AST class file
+    Generate the AST class file (expr.py)
     """
     out_path = Path(out_dir) / (base_name.lower() + ".py")
 
@@ -43,6 +47,9 @@ class Expr(ABC):
 
 
 def define_visitor(base_name, types):
+    """
+    Generate Visitor class to ease adding functions that work for each expr type (see ast_printer.py)
+    """
     lines = []
     lines.append("    class Visitor(ABC):")
 
@@ -60,6 +67,9 @@ def define_visitor(base_name, types):
 
 
 def define_type(base_name: str, class_name: str, field_list: str):
+    """
+    Generate expr type classes
+    """
     lines = []
     lines.append(f"class {class_name}({base_name}):")
     lines.append(f"    def __init__(self, {field_list}):")

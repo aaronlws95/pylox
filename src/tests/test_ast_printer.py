@@ -1,8 +1,9 @@
 import unittest
+
+from utils.ast_printer import AstPrinter
+from utils.expr import Binary, Grouping, Literal, Unary
 from utils.token import Token
 from utils.token_type import TokenType
-from utils.expr import Binary, Unary, Grouping, Literal
-from utils.ast_printer import AstPrinter
 
 
 class TestAstPrinter(unittest.TestCase):

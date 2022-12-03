@@ -64,7 +64,7 @@ class Scanner:
         elif c == " " or c == "\t" or c == "\r":
             pass
         else:
-            self._interpreter.error(self._line, f"Unexpected character: {c}")
+            self._interpreter.error_line(self._line, f"Unexpected character: {c}")
 
     def _is_at_end(self):
         """
@@ -82,7 +82,7 @@ class Scanner:
             self._advance()
 
         if self._is_at_end():
-            self._interpreter.error(self._line, "Unterminated string")
+            self._interpreter.error_line(self._line, "Unterminated string")
             return
 
         # Closing "

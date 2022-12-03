@@ -1,5 +1,6 @@
-from utils.expr import Expr
 from typing import List
+
+from utils.expr import Expr
 
 
 class AstPrinter(Expr.Visitor):
