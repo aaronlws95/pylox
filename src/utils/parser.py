@@ -27,7 +27,7 @@ class Parser:
         """
         expr = self._comparison()
 
-        while self._match([TokenType.BANG, TokenType.BANG_EQUAL]):
+        while self._match([TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL]):
             operator = self._previous()
             right = self._comparison()
             expr = Binary(expr, operator, right)
@@ -40,7 +40,7 @@ class Parser:
         """
         expr = self._term()
 
-        while self._match([TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL]):
+        while self._match([TokenType.GREATER, TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL, TokenType.LESS]):
             operator = self._previous()
             right = self._term()
             expr = Binary(expr, operator, right)
