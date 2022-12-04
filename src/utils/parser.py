@@ -10,6 +10,9 @@ class ParseError(Exception):
 
 
 class Parser:
+    """
+    Parses a list of tokens into expressions
+    """
     def __init__(self, interpreter, tokens):
         self._interpreter = interpreter
         self._tokens: List[Token] = tokens

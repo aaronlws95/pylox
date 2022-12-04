@@ -9,6 +9,72 @@ from utils.token_type import TokenType
 
 
 class TestScanner(unittest.TestCase):
+    def test_scan_tokens(self):
+        scanner = Scanner(
+            None,
+            """ // this is a multiple line test case
+xyz = 1 // comment
+yzw += 2 \r\t\r\t\r\t
+"hello hello"
+             5 * 5.675 \n""",
+        )
+
+        scanner.scan_tokens()
+        self.assertEqual(len(scanner._tokens), 11)
+        self.assertEqual(scanner._line, 6)
+        self.assertTrue(scanner._is_at_end())
+
+    def test_scan_token_comments(self):
+        scanner = Scanner(None, "//this is a comment")
+        scanner._scan_token()
+        self.assertEqual(len(scanner._tokens), 0)
+        self.assertTrue(scanner._is_at_end())
+
+    def test_scan_token_two_char_token(self):
+        scanner = Scanner(None, "==")
+        scanner._scan_token()
+        self.assertEqual(len(scanner._tokens), 1)
+        self.assertEqual(scanner._tokens[0], Token(TokenType.EQUAL_EQUAL, "==", None, 1))
+
+    def test_scan_token_single_char_token(self):
+        scanner = Scanner(None, "=")
+        scanner._scan_token()
+        self.assertEqual(len(scanner._tokens), 1)
+        self.assertEqual(scanner._tokens[0], Token(TokenType.EQUAL, "=", None, 1))
+
+    def test_scan_token_new_line(self):
+        scanner = Scanner(None, "\n")
+        scanner._scan_token()
+        self.assertEqual(scanner._line, 2)
+
+    def test_scan_token_literal(self):
+        scanner = Scanner(None, '"a string"')
+        scanner._scan_token()
+        self.assertEqual(len(scanner._tokens), 1)
+        self.assertEqual(scanner._tokens[0], Token(TokenType.STRING, '"a string"', "a string", 1))
+
+        scanner = Scanner(None, "1234.567")
+        scanner._scan_token()
+        self.assertEqual(len(scanner._tokens), 1)
+        self.assertEqual(scanner._tokens[0], Token(TokenType.NUMBER, "1234.567", 1234.567, 1))
+
+    def test_scan_token_identifier(self):
+        scanner = Scanner(None, "abc")
+        scanner._scan_token()
+        self.assertEqual(len(scanner._tokens), 1)
+        self.assertEqual(scanner._tokens[0], Token(TokenType.IDENTIFIER, "abc", None, 1))
+
+    def test_scan_token_empty_space(self):
+        scanner = Scanner(None, "\r")
+        scanner._scan_token()
+        self.assertEqual(len(scanner._tokens), 0)
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_scan_token_unexpected_char(self, mock_stdout):
+        scanner = Scanner(PyLox, "?")
+        scanner._scan_token()
+        self.assertEqual(mock_stdout.getvalue(), "[line 1] Error  : Unexpected character: ?\n")
+
     def test_is_at_end(self):
         scanner = Scanner(None, "abc")
         scanner._current = 2

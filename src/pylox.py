@@ -63,6 +63,9 @@ class PyLox:
         if PyLox._had_error:
             return
 
+        for t in tokens:
+            print(t)
+
         ast_printer = AstPrinter()
         print(ast_printer.print(expression))
 
@@ -81,7 +84,7 @@ class PyLox:
         if token.token_type == TokenType.EOF:
             PyLox.report(token.line, " at end", message)
         else:
-            PyLox.report(token.line, " at '" + token.lexeme, message)
+            PyLox.report(token.line, " at '" + token.lexeme + "'", message)
 
     @staticmethod
     def report(line: int, where: str, message: str) -> None:
