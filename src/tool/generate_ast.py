@@ -13,7 +13,7 @@ def parse_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(prog="generate_ast", description="Abstract Syntax Tree class generator")
 
-    parser.add_argument("-o", "--out_dir", default="../src/utils/", type=str, help="Output directory")
+    parser.add_argument("-o", "--out_dir", default="../utils/", type=str, help="Output directory")
 
     return parser.parse_args()
 

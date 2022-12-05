@@ -13,8 +13,8 @@ class Parser:
     """
     Parses a list of tokens into expressions
     """
-    def __init__(self, interpreter, tokens):
-        self._interpreter = interpreter
+    def __init__(self, pylox, tokens):
+        self._pylox = pylox
         self._tokens: List[Token] = tokens
         self._current: int = 0
 
@@ -164,7 +164,7 @@ class Parser:
         raise self._error(self._peek(), message)
 
     def _error(self, token_type, message):
-        self._interpreter.error_token(token_type, message)
+        self._pylox.error_token(token_type, message)
         return ParseError(message)
 
     def _synchronize(self):

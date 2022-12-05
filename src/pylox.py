@@ -6,6 +6,9 @@ from utils.scanner import Scanner
 from utils.token_type import TokenType
 from utils.parser import Parser
 from utils.ast_printer import AstPrinter
+from utils.runtime_error import PyLoxRuntimeError
+from utils.interpreter import Interpreter
+
 
 def parse_args() -> argparse.Namespace:
     """
@@ -24,6 +27,8 @@ def parse_args() -> argparse.Namespace:
 
 class PyLox:
     _had_error = False
+    _had_runtime_error = False
+    _interpreter = Interpreter()
 
     @staticmethod
     def run_prompt() -> None:
@@ -49,6 +54,8 @@ class PyLox:
             PyLox.run(f.read())
             if PyLox._had_error:
                 sys.exit(65)
+            if PyLox._had_runtime_error:
+                sys.exit(70)
 
     @staticmethod
     def run(source: str) -> None:
@@ -63,11 +70,13 @@ class PyLox:
         if PyLox._had_error:
             return
 
-        for t in tokens:
-            print(t)
+        # for t in tokens:
+        #     print(t)
 
-        ast_printer = AstPrinter()
-        print(ast_printer.print(expression))
+        # ast_printer = AstPrinter()
+        # print(ast_printer.print(expression))
+
+        PyLox._interpreter.interpret(PyLox, expression)
 
     @staticmethod
     def error_line(line: int, message: str) -> None:
@@ -85,6 +94,11 @@ class PyLox:
             PyLox.report(token.line, " at end", message)
         else:
             PyLox.report(token.line, " at '" + token.lexeme + "'", message)
+
+    @staticmethod
+    def runtime_error(error: PyLoxRuntimeError):
+        print(f"{error.message}\n[line {error.token.line}]")
+        PyLox._had_runtime_error = True
 
     @staticmethod
     def report(line: int, where: str, message: str) -> None:

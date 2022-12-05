@@ -9,12 +9,12 @@ class Scanner:
     Scans the source code and fills a list of tokens ending with EOF
     """
 
-    def __init__(self, interpreter, source: str):
+    def __init__(self, pylox, source: str):
         """
-        :param interpreter: Interpreter e.g. PyLox
+        :param pylox: pylox e.g. PyLox
         :param source: Source code to scan
         """
-        self._interpreter = interpreter
+        self._pylox = pylox
         self._source: str = source
         self._tokens: List[TokenType] = []
         self._start: int = 0
@@ -64,7 +64,7 @@ class Scanner:
         elif c == " " or c == "\t" or c == "\r":
             pass
         else:
-            self._interpreter.error_line(self._line, f"Unexpected character: {c}")
+            self._pylox.error_line(self._line, f"Unexpected character: {c}")
 
     def _is_at_end(self):
         """
@@ -82,7 +82,7 @@ class Scanner:
             self._advance()
 
         if self._is_at_end():
-            self._interpreter.error_line(self._line, "Unterminated string")
+            self._pylox.error_line(self._line, "Unterminated string")
             return
 
         # Closing "
