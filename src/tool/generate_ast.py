@@ -18,19 +18,21 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def define_ast(out_dir: str, base_name: str, types: List[str]):
+def define_ast(out_dir: str, base_name: str, types: List[str], imports: List[str]):
     """
     Generate the AST class file (expr.py)
     """
     out_path = Path(out_dir) / (base_name.lower() + ".py")
 
+    imports = "\n".join(imports)
+
     base_class_str = f"""
 from abc import ABC, abstractmethod
-from utils.token import Token
+{imports}
 
 
-class Expr(ABC):
-    {define_visitor(base_name, types)}
+class {base_name}(ABC):
+{define_visitor(base_name, types)}
     @abstractmethod
     def accept(self, visitor: Visitor):
         pass
@@ -57,13 +59,11 @@ def define_visitor(base_name, types):
         class_name = t.split("=")[0].strip()
         lines.append("")
         lines.append("        @abstractmethod")
-        lines.append(f"        def visit_{class_name.lower()}_{base_name.lower()}(self, expr):")
+        lines.append(f"        def visit_{class_name.lower()}_{base_name.lower()}(self, {base_name.lower()}):")
         lines.append("            pass")
 
     out_str = "\n".join(lines)
-    return f"""
-{out_str}
-        """
+    return out_str
 
 
 def define_type(base_name: str, class_name: str, field_list: str):
@@ -89,11 +89,28 @@ def define_type(base_name: str, class_name: str, field_list: str):
 if __name__ == "__main__":
     args = parse_args()
 
+    # Expr
     types = [
+        "Assign   = name: Token, value: Expr",
         "Binary   = left: Expr, operator: Token, right: Expr",
         "Grouping = expression: Expr",
         "Literal  = value: object",
         "Unary    = operator: Token, right: Expr",
+        "Variable = name: Token",
     ]
 
-    define_ast(args.out_dir, "Expr", types)
+    imports = ["from utils.token import Token"]
+
+    define_ast(args.out_dir, "Expr", types, imports)
+
+    # Stmt
+    types = [
+        "Block      = statements: List[Stmt]",
+        "Expression = expression: Expr",
+        "Print      = expression: Expr",
+        "Var        = name: Token, initializer: Expr",
+    ]
+
+    imports = ["from typing import List", "from utils.expr import Expr", "from utils.token import Token"]
+
+    define_ast(args.out_dir, "Stmt", types, imports)

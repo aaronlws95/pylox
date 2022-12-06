@@ -1,17 +1,26 @@
+from typing import List
 from utils.expr import Expr
 from utils.token import Token
 from utils.token_type import TokenType
 from utils.runtime_error import PyLoxRuntimeError
+from utils.stmt import Stmt
+from utils.environment import Environment
 
 
-class Interpreter(Expr.Visitor):
-    def interpret(self, pylox, expr: Expr):
+class Interpreter(Expr.Visitor, Stmt.Visitor):
+    def __init__(self):
+        self._environment = Environment()
+
+    def interpret(self, pylox, statements: List[Stmt]):
         try:
-            value = self._evaluate(expr)
-            print(self._stringify(value))
+            for statement in statements:
+                self._execute(statement)
 
         except PyLoxRuntimeError as error:
             pylox.runtime_error(error)
+
+    def _execute(self, stmt):
+        stmt.accept(self)
 
     def _stringify(self, obj):
         if obj is None:
@@ -25,6 +34,44 @@ class Interpreter(Expr.Visitor):
             return text
 
         return str(obj)
+
+    def visit_assign_expr(self, expr):
+        value = self._evaluate(expr.value)
+        self._environment.assign(expr.name, value)
+        return value
+
+    def visit_block_stmt(self, stmt):
+        self._execute_block(stmt.statements, Environment(self._environment))
+        return None
+
+    def _execute_block(self, statements, environment):
+        previous = self._environment
+
+        try:
+            self._environment = environment
+
+            for statement in statements:
+                self._execute(statement)
+        except Exception:
+            pass
+
+        self._environment = previous
+
+    def visit_expression_stmt(self, stmt):
+        self._evaluate(stmt.expression)
+        return None
+
+    def visit_print_stmt(self, stmt):
+        value = self._evaluate(stmt.expression)
+        print(self._stringify(value))
+        return None
+
+    def visit_var_stmt(self, stmt):
+        value = None
+        if stmt.initializer is not None:
+            value = self._evaluate(stmt.initializer)
+
+        self._environment.define(stmt.name.lexeme, value)
 
     def visit_literal_expr(self, expr):
         return expr.value
@@ -43,12 +90,15 @@ class Interpreter(Expr.Visitor):
 
         return None
 
+    def visit_variable_expr(self, expr):
+        return self._environment.get(expr.name)
+
     def _checkNumberOperand(self, operator: Token, operand: object):
         if isinstance(operand, float):
             return
         raise PyLoxRuntimeError(operator, "Operand must be a number")
 
-    def __checkNumberOperands(self, operator: Token, left: object, right: object):
+    def _checkNumberOperands(self, operator: Token, left: object, right: object):
         if isinstance(left, float) and isinstance(right, float):
             return
         raise PyLoxRuntimeError(operator, "Operands must be numbers")

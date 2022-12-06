@@ -1,8 +1,9 @@
 from typing import List
 
-from utils.expr import Binary, Grouping, Literal, Unary
+from utils.expr import Binary, Grouping, Literal, Unary, Variable, Assign
 from utils.token import Token
 from utils.token_type import TokenType
+from utils.stmt import Print, Expression, Var, Block
 
 
 class ParseError(Exception):
@@ -13,10 +14,79 @@ class Parser:
     """
     Parses a list of tokens into expressions
     """
+
     def __init__(self, pylox, tokens):
         self._pylox = pylox
         self._tokens: List[Token] = tokens
         self._current: int = 0
+
+    def parse(self):
+        statements = []
+        while not self._is_at_end():
+            statements.append(self._declaration())
+
+        return statements
+
+    def _declaration(self):
+        try:
+            if self._match([TokenType.VAR]):
+                return self._var_declaration()
+            return self._statements()
+
+        except ParseError:
+            self._synchronize()
+            return None
+
+    def _var_declaration(self):
+        name = self._consume(TokenType.IDENTIFIER, "Expect variable name")
+
+        initializer = None
+        if self._match([TokenType.EQUAL]):
+            initializer = self._expression()
+
+        self._consume(TokenType.SEMICOLON, "Expect ';' after variable declaration")
+        return Var(name, initializer)
+
+    def _statements(self):
+        if self._match([TokenType.PRINT]):
+            return self._print_statement()
+
+        if self._match([TokenType.LEFT_BRACE]):
+            return Block(self._block())
+
+        return self._expression_statement()
+
+    def _block(self):
+        statements = []
+
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            statements.append(self._declaration())
+
+        self._consume(TokenType.RIGHT_BRACE, "Expect '}' after  block")
+        return statements
+
+    def _print_statement(self):
+        value = self._expression()
+        self._consume(TokenType.SEMICOLON, "Expect ';' after value")
+        return Print(value)
+
+    def _expression_statement(self):
+        expr = self._expression()
+        self._consume(TokenType.SEMICOLON, "Expect ';' after expression")
+        return Expression(expr)
+
+    def _assignment(self):
+        expr = self._equality()
+
+        if self._match([TokenType.EQUAL]):
+            equals = self._previous()
+            value = self._assignment()
+
+            if isinstance(expr, Variable):
+                name = expr.name
+                return Assign(name, value)
+
+            self._error(equals, "Invalid assignment target")
 
     def _expression(self):
         """
@@ -108,6 +178,9 @@ class Parser:
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expr)
 
+        if self._match([TokenType.IDENTIFIER]):
+            return Variable(self._previous())
+
         raise self._error(self._peek(), "Expect expression.")
 
     def _match(self, types: List[Token]):
@@ -168,13 +241,16 @@ class Parser:
         return ParseError(message)
 
     def _synchronize(self):
+        """
+        Align state such that next token matches the rule being parsed
+        """
         self._advance()
 
         while not self._is_at_end():
             if self._previous().token_type == TokenType.SEMICOLON:
                 return
 
-            if self._peek() in [
+            if self._peek().token_type in [
                 TokenType.CLASS,
                 TokenType.FUN,
                 TokenType.VAR,
@@ -186,11 +262,4 @@ class Parser:
             ]:
                 return
 
-        self._advance()
-
-    def parse(self):
-        try:
-            return self._expression()
-        except ParseError:
-            return None
-    
+            self._advance()

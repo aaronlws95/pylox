@@ -65,18 +65,12 @@ class PyLox:
         scanner = Scanner(PyLox, source)
         tokens = scanner.scan_tokens()
         parser = Parser(PyLox, tokens)
-        expression = parser.parse()
+        statements = parser.parse()
 
         if PyLox._had_error:
             return
 
-        # for t in tokens:
-        #     print(t)
-
-        # ast_printer = AstPrinter()
-        # print(ast_printer.print(expression))
-
-        PyLox._interpreter.interpret(PyLox, expression)
+        PyLox._interpreter.interpret(PyLox, statements)
 
     @staticmethod
     def error_line(line: int, message: str) -> None:
