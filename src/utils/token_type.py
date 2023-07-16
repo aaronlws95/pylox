@@ -31,7 +31,7 @@ class TokenType(Enum):
     LESS_EQUAL = "<="
 
     # Literals.
-    IDENTIFIER = "IDENTIFIER"
+    IDENTIFIER = "IDENTIFIER"  # refers to name given to entities such as variables, functions, structures
     STRING = "STRING"
     NUMBER = "NUMBER"
 

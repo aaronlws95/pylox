@@ -96,6 +96,7 @@ if __name__ == "__main__":
     types = [
         "Assign   = name: Token, value: Expr",
         "Binary   = left: Expr, operator: Token, right: Expr",
+        "Call     = callee: Expr, paren: Token, arguments: List[Expr]",
         "Grouping = expression: Expr",
         "Literal  = value: object",
         "Logical  = left: Expr, operator: Token, right: Expr",
@@ -103,7 +104,7 @@ if __name__ == "__main__":
         "Variable = name: Token",
     ]
 
-    imports = ["from utils.token import Token"]
+    imports = ["from utils.token import Token", "from typing import List"]
 
     define_ast(args.out_dir, "Expr", types, imports)
 
@@ -111,8 +112,10 @@ if __name__ == "__main__":
     types = [
         "Block      = statements: List[Stmt]",
         "Expression = expression: Expr",
+        "Function   = name: Token, params: List[Token], body: List[Stmt]",
         "If         = condition: Expr, then_branch: Stmt, else_branch: Stmt",
         "Print      = expression: Expr",
+        "Return     = keyword: Token, value: Expr",
         "Var        = name: Token, initializer: Expr",
         "While      = condition: Expr, body: Stmt",
     ]
