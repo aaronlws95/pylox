@@ -5,8 +5,9 @@ from utils.runtime_error import PyLoxRuntimeError
 
 class Environment:
     """
-    Storage for bindings of associated variables to values
+    Storage for bindings of associated variables to _values
     """
+
     def __init__(self, environment=None):
         self._values: Dict[str, object] = {}
         self._enclosing: Environment = environment  # enclosing scope
@@ -22,6 +23,18 @@ class Environment:
             return self._enclosing.get(name)
 
         raise PyLoxRuntimeError(name, f"Undefined variable {name.lexeme}")
+
+    def get_at(self, distance: int, name: str) -> object:
+        return self._ancestor(distance)._values.get(name)
+
+    def assign_at(self, distance: int, name: Token, value: object) -> None:
+        self._ancestor(distance)._values[name.lexeme] = value
+
+    def _ancestor(self, distance: int):
+        environment = self
+        for _ in range(distance):
+            environment = environment._enclosing
+        return environment
 
     def assign(self, name: Token, value: object) -> None:
         if name.lexeme in self._values:

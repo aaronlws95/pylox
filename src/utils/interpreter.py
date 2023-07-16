@@ -1,29 +1,15 @@
 from typing import List
-from utils.expr import Expr
 from utils.token import Token
 from utils.token_type import TokenType
 from utils.runtime_error import PyLoxRuntimeError
-from utils.stmt import Stmt
+from utils.expr import Expr, Binary, Grouping, Literal, Unary, Variable, Assign, Logical, Call
+from utils.stmt import Stmt, Print, Expression, Var, Block, If, While, Function, Return
 from utils.return_exception import ReturnException
 from utils.environment import Environment
 from utils.lox_callable import LoxCallable
 from utils.lox_function import LoxFunction
+from utils.lox_native import Clock
 from typing import Any
-import time
-
-
-class Clock(LoxCallable):
-    """
-    Native function that returns current time in seconds
-    """
-    def call(interpreter, arguments: List[object]) -> object:
-        return time.time()
-
-    def arity(self):
-        return 0
-
-    def to_string():
-        return "<native fn>"
 
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
@@ -32,15 +18,12 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
     """
 
     def __init__(self):
-        self._environment = Environment()
+        self.globals = Environment()  # Fixed reference to the outermost environment
+        self._environment = self.globals  # Changes as we enter and exit local scopes
+        self._locals = {}  # Resolution information
 
-        self._environment.define(
-            "clock", Clock()
-        )
-
-    @property
-    def globals(self):
-        return self._environment
+        # Define native functions
+        self._environment.define("clock", Clock())
 
     def interpret(self, pylox, statements: List[Stmt]) -> None:
         try:
@@ -52,6 +35,21 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     def _execute(self, stmt: Stmt) -> None:
         stmt.accept(self)
+
+    def resolve(self, expr: Expr, depth: int) -> None:
+        self._locals.update({expr: depth})
+
+    def _execute_block(self, statements: List[Stmt], environment: Environment) -> None:
+        previous = self._environment
+
+        try:
+            self._environment = environment  # Set environment to enclosing
+
+            for statement in statements:
+                self._execute(statement)
+        # Don't except Exceptions here as it would override ReturnException
+        finally:
+            self._environment = previous
 
     def _stringify(self, obj: object) -> str:
         if obj is None:
@@ -66,62 +64,96 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
         return str(obj)
 
-    def visit_assign_expr(self, expr: Expr) -> Any:
+    def _checkNumberOperand(self, operator: Token, operand: object) -> None:
+        if isinstance(operand, float):
+            return
+        raise PyLoxRuntimeError(operator, "Operand must be a number")
+
+    def _checkNumberOperands(self, operator: Token, left: object, right: object) -> None:
+        if isinstance(left, float) and isinstance(right, float):
+            return None
+        raise PyLoxRuntimeError(operator, "Operands must be numbers")
+
+    def _is_equal(self, a: object, b: object) -> bool:
+        if a is None and b is None:
+            return True
+
+        if a is None:
+            return False
+
+        return a == b
+
+    def _is_truthy(self, obj: object) -> bool:
+        """
+        Check if object is "truthy". None and false are falsey, everything else is truthy.
+        """
+        if obj is None:
+            return False
+
+        if isinstance(obj, bool):
+            return bool(obj)
+
+        return True
+
+    def _evaluate(self, expr) -> Any:
+        return expr.accept(self)
+
+    def _lookup_variable(self, name: Token, expr: Expr) -> object:
+        if expr in self._locals:
+            distance = self._locals[expr]
+            return self._environment.get_at(distance, name.lexeme)
+        else:
+            return self.globals.get(name)
+
+    def visit_assign_expr(self, expr: Assign) -> Any:
         value = self._evaluate(expr.value)
-        self._environment.assign(expr.name, value)
+
+        if expr in self._locals:
+            distance = self._locals[expr]
+            self._environment.assign_at(distance, expr.name, value)
+        else:
+            self.globals.assign(expr.name, value)
         return value
 
-    def visit_block_stmt(self, stmt: Stmt) -> None:
+    def visit_block_stmt(self, stmt: Block) -> None:
         self._execute_block(stmt.statements, Environment(self._environment))
 
-    def _execute_block(self, statements: List[Stmt], environment: Environment) -> None:
-        previous = self._environment
-
-        try:
-            self._environment = environment  # Set environment to enclosing
-
-            for statement in statements:
-                self._execute(statement)
-        # Don't except Exceptions here as it would override ReturnException
-        finally:
-            self._environment = previous
-
-    def visit_expression_stmt(self, stmt: Stmt) -> None:
+    def visit_expression_stmt(self, stmt: Expression) -> None:
         self._evaluate(stmt.expression)
 
-    def visit_function_stmt(self, stmt: Stmt) -> None:
+    def visit_function_stmt(self, stmt: Function) -> None:
         function = LoxFunction(stmt, self._environment)
         self._environment.define(stmt.name.lexeme, function)
 
-    def visit_if_stmt(self, stmt: Stmt) -> None:
+    def visit_if_stmt(self, stmt: If) -> None:
         if self._is_truthy(self._evaluate(stmt.condition)):
             self._execute(stmt.then_branch)
         elif stmt.else_branch is not None:
             self._execute(stmt.else_branch)
 
-    def visit_print_stmt(self, stmt: Stmt) -> None:
+    def visit_print_stmt(self, stmt: Print) -> None:
         value = self._evaluate(stmt.expression)
         print(self._stringify(value))
 
-    def visit_return_stmt(self, stmt: Stmt) -> None:
+    def visit_return_stmt(self, stmt: Return) -> None:
         value = None
         if stmt.value is not None:
             value = self._evaluate(stmt.value)
 
         raise ReturnException(value)
 
-    def visit_var_stmt(self, stmt: Stmt) -> None:
+    def visit_var_stmt(self, stmt: Var) -> None:
         value = None
         if stmt.initializer is not None:
             value = self._evaluate(stmt.initializer)
 
         self._environment.define(stmt.name.lexeme, value)
 
-    def visit_while_stmt(self, stmt: Stmt) -> None:
+    def visit_while_stmt(self, stmt: While) -> None:
         while self._is_truthy(self._evaluate(stmt.condition)):
             self._execute(stmt.body)
 
-    def visit_call_expr(self, expr: Expr) -> Expr:
+    def visit_call_expr(self, expr: Call) -> Expr:
         callee = self._evaluate(expr.callee)
 
         arguments = []
@@ -138,10 +170,10 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
         return function.call(self, arguments)
 
-    def visit_literal_expr(self, expr: Expr) -> object:
+    def visit_literal_expr(self, expr: Literal) -> object:
         return expr.value
 
-    def visit_logical_expr(self, expr: Expr) -> Expr:
+    def visit_logical_expr(self, expr: Logical) -> Expr:
         left = self._evaluate(expr.left)
 
         # Evaluate left first to see if we can short-circuit
@@ -154,10 +186,10 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
         return self._evaluate(expr.right)
 
-    def visit_grouping_expr(self, expr: Expr) -> Expr:
+    def visit_grouping_expr(self, expr: Grouping) -> Expr:
         return self._evaluate(expr.expression)
 
-    def visit_unary_expr(self, expr: Expr) -> Any:
+    def visit_unary_expr(self, expr: Unary) -> Any:
         right = self._evaluate(expr.right)
 
         if expr.operator.token_type == TokenType.MINUS:
@@ -166,20 +198,10 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         elif expr.operator.token_type == TokenType.BANG:
             return self._is_truthy(right)
 
-    def visit_variable_expr(self, expr: Expr) -> object:
-        return self._environment.get(expr.name)
+    def visit_variable_expr(self, expr: Variable) -> object:
+        return self._lookup_variable(expr.name, expr)
 
-    def _checkNumberOperand(self, operator: Token, operand: object) -> None:
-        if isinstance(operand, float):
-            return
-        raise PyLoxRuntimeError(operator, "Operand must be a number")
-
-    def _checkNumberOperands(self, operator: Token, left: object, right: object) -> None:
-        if isinstance(left, float) and isinstance(right, float):
-            return None
-        raise PyLoxRuntimeError(operator, "Operands must be numbers")
-
-    def visit_binary_expr(self, expr: Expr) -> Any:  # noqa C901
+    def visit_binary_expr(self, expr: Binary) -> Any:  # noqa C901
         left = self._evaluate(expr.left)
         right = self._evaluate(expr.right)
 
@@ -218,27 +240,3 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             return not self._is_equal(left, right)
         if expr.operator.token_type == TokenType.EQUAL_EQUAL:
             return self._is_equal(left, right)
-
-    def _is_equal(self, a: object, b: object) -> bool:
-        if a is None and b is None:
-            return True
-
-        if a is None:
-            return False
-
-        return a == b
-
-    def _is_truthy(self, obj: object) -> bool:
-        """
-        Check if object is "truthy". None and false are falsey, everything else is truthy.
-        """
-        if obj is None:
-            return False
-
-        if isinstance(obj, bool):
-            return bool(obj)
-
-        return True
-
-    def _evaluate(self, expr) -> Any:
-        return expr.accept(self)

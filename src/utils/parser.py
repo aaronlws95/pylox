@@ -1,9 +1,10 @@
 from typing import List
 
 from utils.expr import Expr, Binary, Grouping, Literal, Unary, Variable, Assign, Logical, Call
+from utils.stmt import Stmt, Print, Expression, Var, Block, If, While, Function, Return
+
 from utils.token import Token
 from utils.token_type import TokenType
-from utils.stmt import Stmt, Print, Expression, Var, Block, If, While, Function, Return
 
 from typing import Optional
 
@@ -42,7 +43,7 @@ class Parser:
                     expression? ")" statement ;
     whileStmt      -> "while" "(" expression ")" statement ;
     block          -> "{" declaration* "}" ;
-    exprStmt       -> expression ";" 
+    exprStmt       -> expression ";"
     ifStmt         -> "if" "(" expression ")" statement
                     ( "else" statement )? ;
     printStmt      -> "print" expression ";" ;

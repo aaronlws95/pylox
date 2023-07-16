@@ -8,7 +8,7 @@ from utils.parser import Parser
 from utils.ast_printer import AstPrinter
 from utils.runtime_error import PyLoxRuntimeError
 from utils.interpreter import Interpreter
-
+from utils.resolver import Resolver
 
 def parse_args() -> argparse.Namespace:
     """
@@ -70,7 +70,15 @@ class PyLox:
         if PyLox._had_error:
             return
 
-        PyLox._interpreter.interpret(PyLox, statements)
+        interpreter = PyLox._interpreter
+
+        resolver = Resolver(PyLox, interpreter)
+        resolver.resolve(statements)
+
+        if PyLox._had_error:
+            return
+
+        interpreter.interpret(PyLox, statements)
 
     @staticmethod
     def error_line(line: int, message: str) -> None:
