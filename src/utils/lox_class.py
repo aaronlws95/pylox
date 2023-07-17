@@ -1,7 +1,8 @@
+from typing import Dict, List
+
 from utils.lox_callable import LoxCallable
-from utils.lox_instance import LoxInstance
 from utils.lox_function import LoxFunction
-from typing import List, Dict
+from utils.lox_instance import LoxInstance
 
 
 class LoxClass(LoxCallable):

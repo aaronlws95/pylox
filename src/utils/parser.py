@@ -5,17 +5,28 @@ from utils.expr import (
     Binary,
     Call,
     Expr,
-    Set,
     Get,
     Grouping,
     Literal,
     Logical,
-    Unary,
-    This,
-    Variable,
+    Set,
     Super,
+    This,
+    Unary,
+    Variable,
 )
-from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
+from utils.stmt import (
+    Block,
+    Class,
+    Expression,
+    Function,
+    If,
+    Print,
+    Return,
+    Stmt,
+    Var,
+    While,
+)
 from utils.token import Token
 from utils.token_type import TokenType
 

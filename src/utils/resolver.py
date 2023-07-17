@@ -10,13 +10,24 @@ from utils.expr import (
     Grouping,
     Literal,
     Logical,
-    Unary,
     Set,
     Super,
     This,
+    Unary,
     Variable,
 )
-from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
+from utils.stmt import (
+    Block,
+    Class,
+    Expression,
+    Function,
+    If,
+    Print,
+    Return,
+    Stmt,
+    Var,
+    While,
+)
 from utils.token import Token
 
 

@@ -12,20 +12,31 @@ from utils.expr import (
     Logical,
     Set,
     Super,
-    Unary,
     This,
+    Unary,
     Variable,
 )
 from utils.lox_callable import LoxCallable
+from utils.lox_class import LoxClass
 from utils.lox_function import LoxFunction
 from utils.lox_instance import LoxInstance
 from utils.lox_native import Clock
 from utils.return_exception import ReturnException
 from utils.runtime_error import PyLoxRuntimeError
-from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
+from utils.stmt import (
+    Block,
+    Class,
+    Expression,
+    Function,
+    If,
+    Print,
+    Return,
+    Stmt,
+    Var,
+    While,
+)
 from utils.token import Token
 from utils.token_type import TokenType
-from utils.lox_class import LoxClass
 
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
