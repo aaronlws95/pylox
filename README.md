@@ -1,5 +1,7 @@
 # PyLox
-Interpreter based on the Lox language from [Crafting Interpreters](https://craftinginterpreters.com/) written by [Bob Nystrom](https://github.com/munificent). 
+A tree-walk interpreter for the Lox language as defined in [Crafting Interpreters](https://craftinginterpreters.com/) written by [Bob Nystrom](https://github.com/munificent). 
+
+Lox is an object-oriented, dynamically-typed programming language following C-style syntax.
 
 ## Instructions
 ### Run
