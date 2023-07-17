@@ -27,7 +27,6 @@ class LoxFunction(LoxCallable):
         except ReturnException as e:
             if self._is_initializer:
                 return self._closure.get_at(0, "this")
-
             return e.value
 
         if self._is_initializer:
@@ -36,7 +35,6 @@ class LoxFunction(LoxCallable):
     def arity(self) -> int:
         return len(self._declaration.params)
 
-    @classmethod
     def bind(self, instance: LoxInstance):
         environment = Environment(self._closure)
         environment.define("this", instance)

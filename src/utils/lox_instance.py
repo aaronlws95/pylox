@@ -7,8 +7,8 @@ class LoxInstance:
         self.fields = {}
 
     def get(self, name: Token) -> object:
-        if name in self.fields:
-            return self.fields[name]
+        if name.lexeme in self.fields:
+            return self.fields[name.lexeme]
 
         method = self.klass.find_method(name.lexeme)
         if method is not None:

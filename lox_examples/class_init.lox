@@ -1,0 +1,9 @@
+class Foo {
+  init() {
+    print this;
+    print "hello";
+  }
+}
+
+var foo = Foo();
+print foo.init(); // calls init and returns this

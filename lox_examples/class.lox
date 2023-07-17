@@ -8,3 +8,4 @@ print DevonshireCream; // Prints "DevonshireCream".
 
 var devonshire_cream = DevonshireCream();
 print devonshire_cream; // Prints "DevonshireCream instance"
+print devonshire_cream.serveOn();

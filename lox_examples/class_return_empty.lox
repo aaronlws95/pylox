@@ -1,0 +1,8 @@
+class Foo {
+  init() {
+    return; // return this
+  }
+}
+
+var foo = Foo();
+print foo.init();
