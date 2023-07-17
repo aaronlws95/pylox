@@ -11,7 +11,7 @@ from utils.expr import (
     Unary,
     Variable,
 )
-from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While
+from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
 from utils.token import Token
 from utils.token_type import TokenType
 
@@ -70,7 +70,7 @@ class Parser:
     factor         -> unary ( ( "/" | "*" ) unary )* ;
     unary          -> ( "!" | "-" ) unary
                     | primary ;
-    call           -> primary ( "(" arguments? ")" )* ;
+    call           -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
     arguments      -> expression ( "," expression )* ;
     primary        -> NUMBER | STRING | "true" | "false" | "nil"
                     | "(" expression ")" ;
@@ -102,6 +102,8 @@ class Parser:
                     | statement
         """
         try:
+            if self._match([TokenType.CLASS]):
+                return self._class_declaration()
             if self._match([TokenType.VAR]):
                 return self._var_declaration()
             if self._match([TokenType.FUN]):
@@ -111,6 +113,21 @@ class Parser:
         except ParseError:
             self._synchronize()
             return None
+
+    def _class_declaration(self) -> Stmt:
+        """
+        classDecl -> "class" IDENTIFIER "{" function* "}"
+        """
+        name = self._consume(TokenType.IDENTIFIER, "Expect class name.")
+        self._consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
+
+        methods = []
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            methods.append(self._function("method"))
+
+        self._consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
+
+        return Class(name, methods)
 
     def _var_declaration(self) -> Var:
         """
@@ -400,7 +417,7 @@ class Parser:
 
     def _call(self) -> Expr:
         """
-        call -> primary ( "(" arguments? ")" )*
+        call -> primary ( "(" arguments? ")" | "." IDENTIFIER )*
         """
         expr = self._primary()
 

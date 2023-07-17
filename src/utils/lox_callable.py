@@ -19,5 +19,5 @@ class LoxCallable(ABC):
         pass
 
     @abstractmethod
-    def to_string(self) -> str:
+    def __str__(self) -> str:
         pass

@@ -12,7 +12,7 @@ from utils.expr import (
     Unary,
     Variable,
 )
-from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While
+from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
 from utils.token import Token
 
 
@@ -38,6 +38,10 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self._define(stmt.name)
 
         self._resolve_function(stmt, FunctionType.FUNCTION)
+
+    def visit_class_stmt(self, stmt: Class) -> None:
+        self._declare(stmt.name)
+        self._define(stmt.name)
 
     def visit_var_stmt(self, stmt: Var) -> None:
         self._declare(stmt.name)

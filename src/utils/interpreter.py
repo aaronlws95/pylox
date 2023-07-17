@@ -17,10 +17,10 @@ from utils.lox_function import LoxFunction
 from utils.lox_native import Clock
 from utils.return_exception import ReturnException
 from utils.runtime_error import PyLoxRuntimeError
-from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While
+from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
 from utils.token import Token
 from utils.token_type import TokenType
-
+from utils.lox_class import LoxClass
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
     """
@@ -127,6 +127,11 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     def visit_block_stmt(self, stmt: Block) -> None:
         self._execute_block(stmt.statements, Environment(self._environment))
+
+    def visit_class_stmt(self, stmt: Class) -> None:
+        self._environment.define(stmt.name.lexeme, None)
+        klass = LoxClass(stmt.name.lexeme)
+        self._environment.assign(stmt.name, klass)
 
     def visit_expression_stmt(self, stmt: Expression) -> None:
         self._evaluate(stmt.expression)

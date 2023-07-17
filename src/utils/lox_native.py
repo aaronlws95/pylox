@@ -15,5 +15,5 @@ class Clock(LoxCallable):
     def arity(self):
         return 0
 
-    def to_string():
-        return "<native fn>"
+    def __str__(self):
+        return "<native fn clock>"
