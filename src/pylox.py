@@ -2,13 +2,14 @@ import argparse
 import sys
 from pathlib import Path
 
+from utils.ast_printer import AstPrinter
+from utils.interpreter import Interpreter
+from utils.parser import Parser
+from utils.resolver import Resolver
+from utils.runtime_error import PyLoxRuntimeError
 from utils.scanner import Scanner
 from utils.token_type import TokenType
-from utils.parser import Parser
-from utils.ast_printer import AstPrinter
-from utils.runtime_error import PyLoxRuntimeError
-from utils.interpreter import Interpreter
-from utils.resolver import Resolver
+
 
 def parse_args() -> argparse.Namespace:
     """

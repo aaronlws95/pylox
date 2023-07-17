@@ -1,8 +1,7 @@
-from typing import List
+from typing import Any, List
 
 from utils.token import Token
 from utils.token_type import TokenType
-from typing import Any
 
 
 class Scanner:

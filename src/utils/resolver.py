@@ -1,8 +1,19 @@
 from enum import Enum
-from utils.expr import Expr, Binary, Grouping, Literal, Unary, Variable, Assign, Logical, Call
-from utils.stmt import Stmt, Print, Expression, Var, Block, If, While, Function, Return
-from utils.token import Token
 from typing import List, Union
+
+from utils.expr import (
+    Assign,
+    Binary,
+    Call,
+    Expr,
+    Grouping,
+    Literal,
+    Logical,
+    Unary,
+    Variable,
+)
+from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While
+from utils.token import Token
 
 
 class FunctionType(Enum):

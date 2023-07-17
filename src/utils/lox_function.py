@@ -1,14 +1,16 @@
-from utils.lox_callable import LoxCallable
-from utils.stmt import Function
-from utils.environment import Environment
-from utils.return_exception import ReturnException
 from typing import List
+
+from utils.environment import Environment
+from utils.lox_callable import LoxCallable
+from utils.return_exception import ReturnException
+from utils.stmt import Function
 
 
 class LoxFunction(LoxCallable):
     """
     Implements LoxCallable so that we can call it
     """
+
     def __init__(self, declaration: Function, closure: Environment):
         self._declaration = declaration
         self._closure = closure

@@ -1,6 +1,7 @@
 import time
-from utils.lox_callable import LoxCallable
 from typing import List
+
+from utils.lox_callable import LoxCallable
 
 
 class Clock(LoxCallable):

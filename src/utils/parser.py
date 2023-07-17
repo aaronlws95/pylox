@@ -1,12 +1,19 @@
-from typing import List
+from typing import List, Optional
 
-from utils.expr import Expr, Binary, Grouping, Literal, Unary, Variable, Assign, Logical, Call
-from utils.stmt import Stmt, Print, Expression, Var, Block, If, While, Function, Return
-
+from utils.expr import (
+    Assign,
+    Binary,
+    Call,
+    Expr,
+    Grouping,
+    Literal,
+    Logical,
+    Unary,
+    Variable,
+)
+from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While
 from utils.token import Token
 from utils.token_type import TokenType
-
-from typing import Optional
 
 
 class ParseError(Exception):
@@ -19,11 +26,15 @@ class Parser:
 
     program        -> declaration* EOF ;
 
-    declaration    -> funDecl
+    declaration    -> classDecl
+                    | funDecl
                     | varDecl
                     | statement ;
 
+    classDecl      -> "class" IDENTIFIER "{" function* "}" ;
+
     funDecl        -> "fun" function ;
+
     function       -> IDENTIFIER "(" parameters? ")" block ;
     parameters     -> IDENTIFIER ( "," IDENTIFIER )* ;
 

@@ -7,6 +7,7 @@ class AstPrinter(Expr.Visitor):
     """
     Prints the abstract syntax tree
     """
+
     def print(self, expr: Expr) -> str:
         return expr.accept(self)
 

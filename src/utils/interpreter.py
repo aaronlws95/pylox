@@ -1,15 +1,25 @@
-from typing import List
-from utils.token import Token
-from utils.token_type import TokenType
-from utils.runtime_error import PyLoxRuntimeError
-from utils.expr import Expr, Binary, Grouping, Literal, Unary, Variable, Assign, Logical, Call
-from utils.stmt import Stmt, Print, Expression, Var, Block, If, While, Function, Return
-from utils.return_exception import ReturnException
+from typing import Any, List
+
 from utils.environment import Environment
+from utils.expr import (
+    Assign,
+    Binary,
+    Call,
+    Expr,
+    Grouping,
+    Literal,
+    Logical,
+    Unary,
+    Variable,
+)
 from utils.lox_callable import LoxCallable
 from utils.lox_function import LoxFunction
 from utils.lox_native import Clock
-from typing import Any
+from utils.return_exception import ReturnException
+from utils.runtime_error import PyLoxRuntimeError
+from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While
+from utils.token import Token
+from utils.token_type import TokenType
 
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):

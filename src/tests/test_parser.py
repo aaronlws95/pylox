@@ -1,7 +1,7 @@
 import unittest
 
 from pylox import PyLox
-from utils.parser import Parser, ParseError
+from utils.parser import ParseError, Parser
 from utils.token import Token
 from utils.token_type import TokenType
 

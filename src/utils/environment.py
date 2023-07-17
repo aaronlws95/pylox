@@ -1,6 +1,7 @@
 from typing import Dict
-from utils.token import Token
+
 from utils.runtime_error import PyLoxRuntimeError
+from utils.token import Token
 
 
 class Environment:
