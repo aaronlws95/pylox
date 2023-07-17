@@ -13,6 +13,7 @@ from utils.expr import (
     Unary,
     This,
     Variable,
+    Super,
 )
 from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
 from utils.token import Token
@@ -34,7 +35,8 @@ class Parser:
                     | varDecl
                     | statement ;
 
-    classDecl      -> "class" IDENTIFIER "{" function* "}" ;
+    classDecl      -> "class" IDENTIFIER ( "<" IDENTIFIER )?
+                    "{" function* "}" ;
 
     funDecl        -> "fun" function ;
 
@@ -51,7 +53,7 @@ class Parser:
                     | whileStmt
                     | block ;
 
-    returnStmt     -> "return" expression? ";" ;
+    returnStmt      -> "return" expression? ";" ;
     forStmt         -> "for" "(" ( varDecl | exprStmt | ";" )
                     expression? ";"
                     expression? ")" statement ;
@@ -75,8 +77,9 @@ class Parser:
                     | primary ;
     call           -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
     arguments      -> expression ( "," expression )* ;
-    primary        -> NUMBER | STRING | "true" | "false" | "nil"
-                    | "(" expression ")" ;
+    primary        -> "true" | "false" | "nil" | "this"
+                    | NUMBER | STRING | IDENTIFIER | "(" expression ")"
+                    | "super" "." IDENTIFIER
     """
 
     def __init__(self, pylox, tokens: List[Token]):
@@ -101,8 +104,8 @@ class Parser:
     def _declaration(self) -> Optional[Stmt]:
         """
         declaration -> funDecl
-                    | varDecl
-                    | statement
+                     | varDecl
+                     | statement
         """
         try:
             if self._match([TokenType.CLASS]):
@@ -119,9 +122,16 @@ class Parser:
 
     def _class_declaration(self) -> Stmt:
         """
-        classDecl -> "class" IDENTIFIER "{" function* "}"
+        classDecl -> "class" IDENTIFIER ( "<" IDENTIFIER )?
+                   "{" function* "}" ;
         """
         name = self._consume(TokenType.IDENTIFIER, "Expect class name.")
+
+        superclass = None
+        if self._match([TokenType.LESS]):
+            self._consume(TokenType.IDENTIFIER, "Expect superclass name.")
+            superclass = Variable(self._previous())
+
         self._consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
 
         methods = []
@@ -130,7 +140,7 @@ class Parser:
 
         self._consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
 
-        return Class(name, methods)
+        return Class(name, superclass, methods)
 
     def _var_declaration(self) -> Var:
         """
@@ -148,12 +158,12 @@ class Parser:
     def _statement(self) -> Stmt:
         """
         statement -> exprStmt
-                    | forStmt
-                    | ifStmt
-                    | printStmt
-                    | returnStmt
-                    | whileStmt
-                    | block
+                   | forStmt
+                   | ifStmt
+                   | printStmt
+                   | returnStmt
+                   | whileStmt
+                   | block
         """
         if self._match([TokenType.FOR]):
             return self._for_statement()
@@ -191,8 +201,8 @@ class Parser:
     def _for_statement(self) -> Block:
         """
         forStmt -> "for" "(" ( varDecl | exprStmt | ";" )
-                expression? ";"
-                expression? ")" statement
+                 expression? ";"
+                 expression? ")" statement
         """
         self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'")
         if self._match([TokenType.SEMICOLON]):
@@ -457,7 +467,9 @@ class Parser:
 
     def _primary(self) -> Expr:
         """
-        primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+        primary -> "true" | "false" | "nil" | "this"
+                 | NUMBER | STRING | IDENTIFIER | "(" expression ")"
+                 | "super" "." IDENTIFIER
         """
         if self._match([TokenType.FALSE]):
             return Literal(False)
@@ -475,6 +487,13 @@ class Parser:
             expr = self._expression()
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expr)
+
+        if self._match([TokenType.SUPER]):
+            keyword = self._previous()
+            self._consume(TokenType.DOT, "Expect '.' after 'super'.")
+            method = self._consume(TokenType.IDENTIFIER, "Expect superclass method name.")
+
+            return Super(keyword, method)
 
         if self._match([TokenType.THIS]):
             return This(self._previous())

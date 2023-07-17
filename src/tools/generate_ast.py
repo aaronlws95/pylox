@@ -102,6 +102,7 @@ if __name__ == "__main__":
         "Literal  = value: object",
         "Logical  = left: Expr, operator: Token, right: Expr",
         "Set      = obj: Expr, name: Token, value: Expr",
+        "Super    = keyword: Token, method: Token",
         "This     = keyword: Token",
         "Unary    = operator: Token, right: Expr",
         "Variable = name: Token",
@@ -116,7 +117,7 @@ if __name__ == "__main__":
         "Block      = statements: List[Stmt]",
         "Expression = expression: Expr",
         "Function   = name: Token, params: List[Token], body: List[Stmt]",
-        "Class      = name: Token, methods: List[Function]",
+        "Class      = name: Token, superclass: Variable,  methods: List[Function]",
         "If         = condition: Expr, then_branch: Stmt, else_branch: Stmt",
         "Print      = expression: Expr",
         "Return     = keyword: Token, value: Expr",
@@ -124,6 +125,6 @@ if __name__ == "__main__":
         "While      = condition: Expr, body: Stmt",
     ]
 
-    imports = ["from typing import List", "from utils.expr import Expr", "from utils.token import Token"]
+    imports = ["from typing import List", "from utils.expr import Expr, Variable", "from utils.token import Token"]
 
     define_ast(args.out_dir, "Stmt", types, imports)

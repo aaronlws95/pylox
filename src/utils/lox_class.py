@@ -5,7 +5,8 @@ from typing import List, Dict
 
 
 class LoxClass(LoxCallable):
-    def __init__(self, name: str, methods: Dict[str, LoxFunction]):
+    def __init__(self, name: str, superclass, methods: Dict[str, LoxFunction]):
+        self.superclass = superclass
         self.name = name
         self.methods = methods
 
@@ -20,6 +21,9 @@ class LoxClass(LoxCallable):
     def find_method(self, name: str) -> LoxFunction:
         if name in self.methods:
             return self.methods[name]
+
+        if self.superclass is not None:
+            return self.superclass.find_method(name)
 
     def arity(self):
         initializer = self.find_method("init")

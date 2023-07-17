@@ -12,6 +12,7 @@ from utils.expr import (
     Logical,
     Unary,
     Set,
+    Super,
     This,
     Variable,
 )
@@ -22,6 +23,7 @@ from utils.token import Token
 class ClassType(Enum):
     NONE = 0
     CLASS = 1
+    SUBCLASS = 2
 
 
 class FunctionType(Enum):
@@ -57,6 +59,15 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self._declare(stmt.name)
         self._define(stmt.name)
 
+        if stmt.superclass is not None and stmt.name.lexeme == stmt.superclass.name.lexeme:
+            self._pylox.error_token(stmt.superclass.name, "A class can't inherit from itself.")
+
+        if stmt.superclass is not None:
+            self._current_class = ClassType.SUBCLASS
+            self.resolve(stmt.superclass)
+            self._begin_scope()
+            self._peek_scope["super"] = True
+
         self._begin_scope()
         self._peek_scope["this"] = True
 
@@ -68,6 +79,9 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
             self._resolve_function(method, declaration)
 
         self._end_scope()
+
+        if stmt.superclass is not None:
+            self._end_scope()
 
         self._current_class = enclosing_class
 
@@ -131,6 +145,13 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self.resolve(expr.value)
         self.resolve(expr.obj)
 
+    def visit_super_expr(self, expr: Super) -> None:
+        if self._current_class == ClassType.NONE:
+            self._pylox.error_token(expr.keyword, "Can't use 'super' outside of a class.")
+        elif self._current_class != ClassType.SUBCLASS:
+            self._pylox.error_token(expr.keyword, "Can't use 'super' in a class with no superclass.")
+        self._resolve_local(expr, expr.keyword)
+
     def visit_this_expr(self, expr: This) -> None:
         if self._current_class == ClassType.NONE:
             self._pylox.error_token(expr.keyword, "Can't use 'this' outside of a class.")
@@ -151,7 +172,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
     def visit_assign_expr(self, expr: Assign) -> None:
         self.resolve(expr.value)
         self._resolve_local(expr, expr.name)
-    
+
     @property
     def _peek_scope(self):
         return self._scopes[-1]
