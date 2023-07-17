@@ -1,14 +1,21 @@
+from enum import Enum
 from utils.expr import Expr, Binary, Grouping, Literal, Unary, Variable, Assign, Logical, Call
 from utils.stmt import Stmt, Print, Expression, Var, Block, If, While, Function, Return
 from utils.token import Token
 from typing import List, Union
 
 
+class FunctionType(Enum):
+    NONE = 0
+    FUNCTION = 1
+
+
 class Resolver(Expr.Visitor, Stmt.Visitor):
     def __init__(self, pylox, interpreter):
         self._pylox = pylox
         self._interpreter = interpreter
-        self._scopes = []   # stack: back [outer_scope, ..., inner_scope] front
+        self._scopes = []  # stack: back [outer_scope, ..., inner_scope] front
+        self._current_function = FunctionType.NONE
 
     def visit_block_stmt(self, stmt: Block) -> None:
         self._begin_scope()
@@ -19,7 +26,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self._declare(stmt.name)
         self._define(stmt.name)
 
-        self._resolve_function(stmt)
+        self._resolve_function(stmt, FunctionType.FUNCTION)
 
     def visit_var_stmt(self, stmt: Var) -> None:
         self._declare(stmt.name)
@@ -41,6 +48,9 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self.resolve(stmt.expression)
 
     def visit_return_stmt(self, stmt: Return) -> None:
+        if self._current_function == FunctionType.NONE:
+            self._pylox.error_token(stmt.keyword, "Can't return from top-level code.")
+
         if stmt.value is not None:
             self.resolve(stmt.value)
 
@@ -91,7 +101,12 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         if not self._scopes:
             return
 
-        self._scopes[-1].update({name.lexeme: False})
+        peek = self._scopes[-1]
+
+        if name.lexeme in peek:
+            self._pylox.error_token(name, "Already a variable with this name in this scope.")
+
+        peek.update({name.lexeme: False})
 
     def _define(self, name: Token) -> None:
         """
@@ -109,7 +124,10 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
     def _end_scope(self) -> None:
         self._scopes.pop()
 
-    def _resolve_function(self, function: Function) -> None:
+    def _resolve_function(self, function: Function, function_type: FunctionType) -> None:
+        enclosing_function = self._current_function
+        self._current_function = function_type
+
         self._begin_scope()
         for param in function.params:
             self._declare(param)
@@ -117,6 +135,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
 
         self.resolve(function.body)
         self._end_scope()
+        self._current_function = enclosing_function
 
     def _resolve_local(self, expr: Expr, name: Token) -> None:
         for i in reversed(range(len(self._scopes))):
