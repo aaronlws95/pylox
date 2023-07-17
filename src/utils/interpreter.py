@@ -6,14 +6,18 @@ from utils.expr import (
     Binary,
     Call,
     Expr,
+    Get,
     Grouping,
     Literal,
     Logical,
+    Set,
     Unary,
+    This,
     Variable,
 )
 from utils.lox_callable import LoxCallable
 from utils.lox_function import LoxFunction
+from utils.lox_instance import LoxInstance
 from utils.lox_native import Clock
 from utils.return_exception import ReturnException
 from utils.runtime_error import PyLoxRuntimeError
@@ -21,6 +25,7 @@ from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var
 from utils.token import Token
 from utils.token_type import TokenType
 from utils.lox_class import LoxClass
+
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
     """
@@ -130,14 +135,20 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
     def visit_class_stmt(self, stmt: Class) -> None:
         self._environment.define(stmt.name.lexeme, None)
-        klass = LoxClass(stmt.name.lexeme)
+
+        methods = {}
+        for method in stmt.methods:
+            function = LoxFunction(method, self._environment, method.name.lexeme == "init")
+            methods[method.name.lexeme] = function
+
+        klass = LoxClass(stmt.name.lexeme, methods)
         self._environment.assign(stmt.name, klass)
 
     def visit_expression_stmt(self, stmt: Expression) -> None:
         self._evaluate(stmt.expression)
 
     def visit_function_stmt(self, stmt: Function) -> None:
-        function = LoxFunction(stmt, self._environment)
+        function = LoxFunction(stmt, self._environment, False)
         self._environment.define(stmt.name.lexeme, function)
 
     def visit_if_stmt(self, stmt: If) -> None:
@@ -200,6 +211,26 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
                 return left
 
         return self._evaluate(expr.right)
+
+    def visit_set_expr(self, expr: Set) -> object:
+        obj = self._evaluate(expr.obj)
+
+        if not isinstance(obj, LoxInstance):
+            raise RuntimeError(expr.name, "Only instances have fields.")
+
+        value = self._evaluate(expr.value)
+        obj.sett(expr.name, value)
+        return value
+
+    def visit_this_expr(self, expr: This) -> object:
+        return self._lookup_variable(expr.keyword, expr)
+
+    def visit_get_expr(self, expr: Get) -> object:
+        obj = self._evaluate(expr.obj)
+        if isinstance(obj, LoxInstance):
+            return obj.get(expr.name)
+
+        raise RuntimeError(expr.name, "Only instances have properties.")
 
     def visit_grouping_expr(self, expr: Grouping) -> Expr:
         return self._evaluate(expr.expression)

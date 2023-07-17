@@ -5,10 +5,13 @@ from utils.expr import (
     Binary,
     Call,
     Expr,
+    Set,
+    Get,
     Grouping,
     Literal,
     Logical,
     Unary,
+    This,
     Variable,
 )
 from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
@@ -60,8 +63,8 @@ class Parser:
     printStmt      -> "print" expression ";" ;
 
     expression     -> assignment ;
-    assignment     -> IDENTIFIER "=" assignment
-                    | logic_or
+    assignment     -> ( call "." )? IDENTIFIER "=" assignment
+                    | logic_or ;
     logic_or       -> logic_and ( "or" logic_and )* ;
     logic_and      -> equality ( "and" equality )* ;
     equality       -> comparison ( ( "!=" | "==" ) comparison )* ;
@@ -309,8 +312,8 @@ class Parser:
 
     def _assignment(self) -> Expr:
         """
-        assignment -> IDENTIFIER "=" assignment
-                    | logic_or
+        assignment -> ( call "." )? IDENTIFIER "=" assignment
+                    | logic_or ;
         """
         expr = self._or()
 
@@ -323,6 +326,9 @@ class Parser:
                 return Assign(name, value)
 
             self._error(equals, "Invalid assignment target")
+
+        elif isinstance(expr, Get):
+            return Set(expr.obj, expr.name, value)
 
         return expr
 
@@ -424,6 +430,9 @@ class Parser:
         while True:
             if self._match([TokenType.LEFT_PAREN]):
                 expr = self._finish_call(expr)
+            elif self._match([TokenType.DOT]):
+                name = self._consume(TokenType.IDENTIFIER, "Expect property name after '.'.")
+                expr = Get(expr, name)
             else:
                 break
 
@@ -466,6 +475,9 @@ class Parser:
             expr = self._expression()
             self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expr)
+
+        if self._match([TokenType.THIS]):
+            return This(self._previous())
 
         if self._match([TokenType.IDENTIFIER]):
             return Variable(self._previous())

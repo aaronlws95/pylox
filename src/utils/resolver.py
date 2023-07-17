@@ -6,19 +6,29 @@ from utils.expr import (
     Binary,
     Call,
     Expr,
+    Get,
     Grouping,
     Literal,
     Logical,
     Unary,
+    Set,
+    This,
     Variable,
 )
 from utils.stmt import Block, Expression, Function, If, Print, Return, Stmt, Var, While, Class
 from utils.token import Token
 
 
+class ClassType(Enum):
+    NONE = 0
+    CLASS = 1
+
+
 class FunctionType(Enum):
     NONE = 0
     FUNCTION = 1
+    INITIALIZER = 2
+    METHOD = 3
 
 
 class Resolver(Expr.Visitor, Stmt.Visitor):
@@ -27,6 +37,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self._interpreter = interpreter
         self._scopes = []  # stack: back [outer_scope, ..., inner_scope] front
         self._current_function = FunctionType.NONE
+        self._current_class = ClassType.NONE
 
     def visit_block_stmt(self, stmt: Block) -> None:
         self._begin_scope()
@@ -40,8 +51,25 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self._resolve_function(stmt, FunctionType.FUNCTION)
 
     def visit_class_stmt(self, stmt: Class) -> None:
+        enclosing_class = self._current_class
+        self._current_class = ClassType.CLASS
+
         self._declare(stmt.name)
         self._define(stmt.name)
+
+        self._begin_scope()
+        self._peek_scope["this"] = True
+
+        for method in stmt.methods:
+            declaration = FunctionType.METHOD
+            if method.name.lexeme == "init":
+                declaration = FunctionType.INITIALIZER
+
+            self._resolve_function(method, declaration)
+
+        self._end_scope()
+
+        self._current_class = enclosing_class
 
     def visit_var_stmt(self, stmt: Var) -> None:
         self._declare(stmt.name)
@@ -67,6 +95,9 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
             self._pylox.error_token(stmt.keyword, "Can't return from top-level code.")
 
         if stmt.value is not None:
+            if self._current_function == FunctionType.INITIALIZER:
+                self._pylox.error_token(stmt.keyword, "Can't return a value from an initializer.")
+
             self.resolve(stmt.value)
 
     def visit_while_stmt(self, stmt: While) -> None:
@@ -83,6 +114,9 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         for argument in expr.arguments:
             self.resolve(argument)
 
+    def visit_get_expr(self, expr: Get) -> None:
+        self._resolve(expr.obj)
+
     def visit_grouping_expr(self, expr: Grouping) -> None:
         self.resolve(expr.expression)
 
@@ -93,12 +127,23 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         self.resolve(expr.left)
         self.resolve(expr.right)
 
+    def visit_set_expr(self, expr: Set) -> None:
+        self.resolve(expr.value)
+        self.resolve(expr.obj)
+
+    def visit_this_expr(self, expr: This) -> None:
+        if self._current_class == ClassType.NONE:
+            self._pylox.error_token(expr.keyword, "Can't use 'this' outside of a class.")
+            return
+
+        self._resolve_local(expr, expr.keyword)
+
     def visit_unary_expr(self, expr: Unary) -> None:
         self.resolve(expr.right)
 
     def visit_variable_expr(self, expr: Variable) -> None:
         if self._scopes:
-            if expr.name.lexeme in self._scopes[-1] and not self._scopes[-1][expr.name.lexeme]:
+            if expr.name.lexeme in self._peek_scope and not self._peek_scope[expr.name.lexeme]:
                 self._pylox.error_token(expr.name, "Can't read local variable in its own initializer.")
 
         self._resolve_local(expr, expr.name)
@@ -106,6 +151,10 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
     def visit_assign_expr(self, expr: Assign) -> None:
         self.resolve(expr.value)
         self._resolve_local(expr, expr.name)
+    
+    @property
+    def _peek_scope(self):
+        return self._scopes[-1]
 
     def _declare(self, name: Token) -> None:
         """
@@ -116,7 +165,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         if not self._scopes:
             return
 
-        peek = self._scopes[-1]
+        peek = self._peek_scope
 
         if name.lexeme in peek:
             self._pylox.error_token(name, "Already a variable with this name in this scope.")
@@ -131,7 +180,7 @@ class Resolver(Expr.Visitor, Stmt.Visitor):
         if not self._scopes:
             return
 
-        self._scopes[-1].update({name.lexeme: True})
+        self._peek_scope.update({name.lexeme: True})
 
     def _begin_scope(self) -> None:
         self._scopes.append({})
