@@ -22,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument("-s", "--script", default=None, type=str, help="'.lox' script to interpret")
+    parser.add_argument("--ast", action="store_true", help="Run with abstract syntax tree printer")
 
     return parser.parse_args()
 
@@ -30,6 +31,7 @@ class PyLox:
     _had_error = False
     _had_runtime_error = False
     _interpreter = Interpreter()
+    _ast_printer = AstPrinter()
 
     @staticmethod
     def run_prompt() -> None:
@@ -47,16 +49,19 @@ class PyLox:
                 break
 
     @staticmethod
-    def run_file(path: Path):
+    def run_file(path: Path, use_ast_printer=False):
         """
         Run code from file
         """
         with open(path, "r") as f:
-            PyLox.run(f.read())
-            if PyLox._had_error:
-                sys.exit(65)
-            if PyLox._had_runtime_error:
-                sys.exit(70)
+            if use_ast_printer:
+                PyLox.run_ast_printer(f.read())
+            else:
+                PyLox.run(f.read())
+                if PyLox._had_error:
+                    sys.exit(65)
+                if PyLox._had_runtime_error:
+                    sys.exit(70)
 
     @staticmethod
     def run(source: str) -> None:
@@ -80,6 +85,30 @@ class PyLox:
             return
 
         interpreter.interpret(PyLox, statements)
+
+    @staticmethod
+    def run_ast_printer(source: str) -> None:
+        """
+        Run interpreter on a source line
+        """
+        scanner = Scanner(PyLox, source)
+        tokens = scanner.scan_tokens()
+        parser = Parser(PyLox, tokens)
+        statements = parser.parse()
+
+        if PyLox._had_error:
+            return
+
+        interpreter = PyLox._interpreter
+
+        resolver = Resolver(PyLox, interpreter)
+        resolver.resolve(statements)
+
+        if PyLox._had_error:
+            return
+
+        for statement in statements:
+            print(PyLox._ast_printer.print(statement))
 
     @staticmethod
     def error_line(line: int, message: str) -> None:
@@ -118,6 +147,6 @@ if __name__ == "__main__":
     args = parse_args()
 
     if args.script is not None:
-        PyLox.run_file(Path(args.script))
+        PyLox.run_file(Path(args.script), args.ast)
     else:
         PyLox.run_prompt()

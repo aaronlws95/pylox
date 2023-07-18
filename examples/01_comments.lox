@@ -1,4 +1,4 @@
-print "hello1";
+print "start";
 
 // Start of multiline comment
 /*
@@ -15,4 +15,4 @@ multiline comment depth = 2
 
 */
 
-print "hello2";
+print "end";
