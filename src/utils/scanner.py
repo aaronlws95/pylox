@@ -39,14 +39,13 @@ class Scanner:
         """
         c = self._advance()
         if c in TokenType._value2member_map_:
-            # // Comments
+            # // Single-line comment
             if c == "/" and self._match("/"):
                 while self._peek() != "\n" and not self._is_at_end():
                     self._advance()
-            # /* ... */ Comments
+            # Start multi-line comment
             elif c == "/" and self._match("*"):
                 self._nested_comment_depth += 1
-                # self._advance()
                 while (
                     not (self._peek() == "*" and self._peek_next() == "/")
                     and not (self._peek() == "/" and self._peek_next() == "*")
@@ -55,8 +54,8 @@ class Scanner:
                     cur = self._advance()
                     if cur == "\n":
                         self._line += 1
+            # End multi-line comment
             elif c == "*" and self._match("/"):
-                # self._advance()
                 self._nested_comment_depth -= 1
             # Two character tokens
             elif self._match("=") and c + "=" in TokenType._value2member_map_:
@@ -64,6 +63,7 @@ class Scanner:
             # Single character tokens
             else:
                 self._add_token(TokenType(c))
+        # Continue multi-line comment if nested
         elif self._nested_comment_depth > 0:
             while (
                 not (self._peek() == "*" and self._peek_next() == "/")
