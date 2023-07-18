@@ -5,7 +5,6 @@ Lox is an object-oriented, dynamically-typed programming language following C-st
 
 ## Instructions
 
-
 ### Requirements
 - Python 3.10
 

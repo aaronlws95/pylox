@@ -37,7 +37,9 @@ class ParseError(Exception):
 
 class Parser:
     """
-    Parses a list of tokens after they have been scanned into statements following the grammar:
+    Parses a list of tokens using recursive descent after they have been scanned into statements. 
+    
+    We will use the following grammar:
 
     program        -> declaration* EOF ;
 
