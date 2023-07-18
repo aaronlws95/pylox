@@ -20,6 +20,7 @@ class Scanner:
         self._start: int = 0
         self._current: int = 0
         self._line: int = 1
+        self._nested_comment_depth: int = 0
 
     def scan_tokens(self) -> List[TokenType]:
         """
@@ -32,22 +33,46 @@ class Scanner:
         self._tokens.append(Token(TokenType.EOF, "", None, self._line))
         return self._tokens
 
-    def _scan_token(self) -> None:
+    def _scan_token(self) -> None:  # noqa C901
         """
         Get next token
         """
         c = self._advance()
         if c in TokenType._value2member_map_:
-            # Comments
+            # // Comments
             if c == "/" and self._match("/"):
                 while self._peek() != "\n" and not self._is_at_end():
                     self._advance()
+            # /* ... */ Comments
+            elif c == "/" and self._match("*"):
+                self._nested_comment_depth += 1
+                # self._advance()
+                while (
+                    not (self._peek() == "*" and self._peek_next() == "/")
+                    and not (self._peek() == "/" and self._peek_next() == "*")
+                    and not self._is_at_end()
+                ):
+                    cur = self._advance()
+                    if cur == "\n":
+                        self._line += 1
+            elif c == "*" and self._match("/"):
+                # self._advance()
+                self._nested_comment_depth -= 1
             # Two character tokens
             elif self._match("=") and c + "=" in TokenType._value2member_map_:
                 self._add_token(TokenType(c + "="))
             # Single character tokens
             else:
                 self._add_token(TokenType(c))
+        elif self._nested_comment_depth > 0:
+            while (
+                not (self._peek() == "*" and self._peek_next() == "/")
+                and not (self._peek() == "/" and self._peek_next() == "*")
+                and not self._is_at_end()
+            ):
+                cur = self._advance()
+                if cur == "\n":
+                    self._line += 1
         # New line
         elif c == "\n":
             self._line += 1
