@@ -34,7 +34,7 @@ class PyLox:
     _ast_printer = AstPrinter()
 
     @staticmethod
-    def run_prompt() -> None:
+    def run_prompt(use_ast_printer: bool) -> None:
         """
         Run in REPL mode
         """
@@ -43,28 +43,25 @@ class PyLox:
                 line = input("> ")
                 if line == "quit":
                     break
-                PyLox.run(line)
+                PyLox.run(line, use_ast_printer)
                 PyLox._had_error = False
             except EOFError:
                 break
 
     @staticmethod
-    def run_file(path: Path, use_ast_printer=False):
+    def run_file(path: Path, use_ast_printer: bool) -> None:
         """
         Run code from file
         """
         with open(path, "r") as f:
-            if use_ast_printer:
-                PyLox.run_ast_printer(f.read())
-            else:
-                PyLox.run(f.read())
-                if PyLox._had_error:
-                    sys.exit(65)
-                if PyLox._had_runtime_error:
-                    sys.exit(70)
+            PyLox.run(f.read(), use_ast_printer)
+            if PyLox._had_error:
+                sys.exit(65)
+            if PyLox._had_runtime_error:
+                sys.exit(70)
 
     @staticmethod
-    def run(source: str) -> None:
+    def run(source: str, use_ast_printer: bool) -> None:
         """
         Run interpreter on a source line
         """
@@ -84,31 +81,11 @@ class PyLox:
         if PyLox._had_error:
             return
 
-        interpreter.interpret(PyLox, statements)
-
-    @staticmethod
-    def run_ast_printer(source: str) -> None:
-        """
-        Run interpreter on a source line
-        """
-        scanner = Scanner(PyLox, source)
-        tokens = scanner.scan_tokens()
-        parser = Parser(PyLox, tokens)
-        statements = parser.parse()
-
-        if PyLox._had_error:
-            return
-
-        interpreter = PyLox._interpreter
-
-        resolver = Resolver(PyLox, interpreter)
-        resolver.resolve(statements)
-
-        if PyLox._had_error:
-            return
-
-        for statement in statements:
-            print(PyLox._ast_printer.print(statement))
+        if use_ast_printer:
+            for statement in statements:
+                print(PyLox._ast_printer.print(statement))
+        else:
+            interpreter.interpret(PyLox, statements)
 
     @staticmethod
     def error_line(line: int, message: str) -> None:
@@ -149,4 +126,4 @@ if __name__ == "__main__":
     if args.script is not None:
         PyLox.run_file(Path(args.script), args.ast)
     else:
-        PyLox.run_prompt()
+        PyLox.run_prompt(args.ast)

@@ -4,26 +4,30 @@ A tree-walk interpreter for the Lox language as defined in [Crafting Interpreter
 Lox is an object-oriented, dynamically-typed programming language following C-style syntax.
 
 ## Instructions
-### Run
+
+
+### Requirements
+- Python 3.10
+
 ```bash
-./pylox <optional_script_path>
+make conda
+conda activate pylox
+```
+
+### Run
+Use the `--ast` flag to run with the abstract syntax tree print output
+```bash
+./pylox # Run REPL, currently does not support multi-line blocks
+./pylox -s <optional_script_path> # Run Lox script 
 ```
 
 ### Test
 ```bash
-tox -e unittest
-coverage report -m # check coverage
+make coverage
 ```
 
 ### Formatting
 ```bash
-tox -e format
-tox -e lint
+make format
 ```
 
-## Requirements
-- Python 3.10
-
-```bash
-pip install -r requirements.txt
-```

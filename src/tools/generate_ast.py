@@ -128,3 +128,5 @@ if __name__ == "__main__":
     imports = ["from typing import List", "from utils.expr import Expr, Variable", "from utils.token import Token"]
 
     define_ast(args.out_dir, "Stmt", types, imports)
+
+    print("Generated abstract syntax tree to expr.py and stmt.py")
