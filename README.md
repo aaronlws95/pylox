@@ -1,5 +1,5 @@
 # PyLox
-A tree-walk interpreter for the Lox language as defined in [Crafting Interpreters](https://craftinginterpreters.com/) written by [Bob Nystrom](https://github.com/munificent). 
+A tree-walk interpreter for the Lox language as defined in Part II of [Crafting Interpreters](https://craftinginterpreters.com/) written by [Bob Nystrom](https://github.com/munificent). 
 
 Lox is an object-oriented, dynamically-typed programming language following C-style syntax.
 
@@ -109,3 +109,8 @@ src/utils/token_type.py            41      0   100%
 ---------------------------------------------------
 TOTAL                            1547    671    57%
 ```
+
+## TODO
+- [ ] More tests
+- [ ] Challenges
+- [ ] Make REPL more nice to use

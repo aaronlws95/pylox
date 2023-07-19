@@ -9,7 +9,7 @@ class Clock(LoxCallable):
     Native function that returns current time in seconds
     """
 
-    def call(interpreter, arguments: List[object]) -> object:
+    def call(self, interpreter, arguments: List[object]) -> object:
         return time.time()
 
     def arity(self):
