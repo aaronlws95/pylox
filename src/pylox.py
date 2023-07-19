@@ -69,7 +69,6 @@ class PyLox:
         tokens = scanner.scan_tokens()
         parser = Parser(PyLox, tokens)
         statements = parser.parse()
-
         if PyLox._had_error:
             return
 
@@ -77,7 +76,6 @@ class PyLox:
 
         resolver = Resolver(PyLox, interpreter)
         resolver.resolve(statements)
-
         if PyLox._had_error:
             return
 
@@ -106,7 +104,7 @@ class PyLox:
 
     @staticmethod
     def runtime_error(error: PyLoxRuntimeError):
-        print(f"{error.message}\n[line {error.token.line}]")
+        print(f"[line {error.token.line}]: {error.message} ")
         PyLox._had_runtime_error = True
 
     @staticmethod

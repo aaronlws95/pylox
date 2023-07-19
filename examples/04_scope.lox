@@ -1,0 +1,32 @@
+var volume = 11;
+var global = "outside";
+volume = 0;
+
+{
+  var volume = 3 * 4 * 5;
+  print volume; // 60
+  var local = "inside";
+  print global + local; // outsideinside
+}
+
+print volume; // 0
+
+var a = "global a";
+var b = "global b";
+var c = "global c";
+{
+  var a = "outer a";
+  var b = "outer b";
+  {
+    var a = "inner a";
+    print a; // inner a
+    print b; // outer b
+    print c; // global c
+  }
+  print a; // outer a
+  print b; // outer b
+  print c; // global c
+}
+print a; // global a
+print b; // global b
+print c; // global c

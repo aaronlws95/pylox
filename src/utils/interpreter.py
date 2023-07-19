@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Dict
 
 from utils.environment import Environment
 from utils.expr import (
@@ -41,18 +41,21 @@ from utils.token_type import TokenType
 
 class Interpreter(Expr.Visitor, Stmt.Visitor):
     """
-    Executes PyLox statements after they have been parsed by the parser
+    Executes statements
     """
 
     def __init__(self):
         self.globals = Environment()  # Fixed reference to the outermost environment
         self._environment = self.globals  # Changes as we enter and exit local scopes
-        self._locals = {}  # Resolution information
+        self._locals: Dict[Expr, int] = {}  # Expr: scope depth
 
         # Define native functions
         self._environment.define("clock", Clock())
 
     def interpret(self, pylox, statements: List[Stmt]) -> None:
+        """
+        Executes a list of statements
+        """
         try:
             for statement in statements:
                 self._execute(statement)
@@ -61,9 +64,15 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             pylox.runtime_error(error)
 
     def _execute(self, stmt: Stmt) -> None:
+        """
+        Call corresponding visitor  function
+        """
         stmt.accept(self)
 
     def resolve(self, expr: Expr, depth: int) -> None:
+        """
+        Resolve by updating expression given scope depth
+        """
         self._locals.update({expr: depth})
 
     def _execute_block(self, statements: List[Stmt], environment: Environment) -> None:
@@ -76,7 +85,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
                 self._execute(statement)
         # Don't except Exceptions here as it would override ReturnException
         finally:
-            self._environment = previous
+            self._environment = previous  # Set environment back to original
 
     def _stringify(self, obj: object) -> str:
         if obj is None:
@@ -91,15 +100,21 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
 
         return str(obj)
 
-    def _checkNumberOperand(self, operator: Token, operand: object) -> None:
+    def _check_number_operand(self, operator: Token, operand: object) -> None:
+        """
+        Check if an operand is a number
+        """
         if isinstance(operand, float):
             return
-        raise PyLoxRuntimeError(operator, "Operand must be a number")
+        raise PyLoxRuntimeError(operator, "[Interpreter] Operand must be a number")
 
-    def _checkNumberOperands(self, operator: Token, left: object, right: object) -> None:
+    def _check_number_operands(self, operator: Token, left: object, right: object) -> None:
+        """
+        Check if operands are both numbers
+        """
         if isinstance(left, float) and isinstance(right, float):
             return None
-        raise PyLoxRuntimeError(operator, "Operands must be numbers")
+        raise PyLoxRuntimeError(operator, "[Interpreter] Operands must be numbers")
 
     def _is_equal(self, a: object, b: object) -> bool:
         if a is None and b is None:
@@ -126,11 +141,15 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         return expr.accept(self)
 
     def _lookup_variable(self, name: Token, expr: Expr) -> object:
+        """
+        Get object value given variable
+        """
+        # Get from corresponding scope if expr is found in locals
         if expr in self._locals:
             distance = self._locals[expr]
             return self._environment.get_at(distance, name.lexeme)
-        else:
-            return self.globals.get(name)
+
+        return self.globals.get(name)
 
     def visit_assign_expr(self, expr: Assign) -> Any:
         value = self._evaluate(expr.value)
@@ -150,7 +169,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         if stmt.superclass is not None:
             superclass = self._evaluate(stmt.superclass)
             if not isinstance(superclass, LoxClass):
-                raise RuntimeError(stmt.superclass.name, "Superclass must be a class")
+                raise PyLoxRuntimeError(stmt.superclass.name, "[Interpreter] Superclass must be a class")
 
         self._environment.define(stmt.name.lexeme, None)
 
@@ -213,12 +232,12 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             arguments.append(self._evaluate(argument))
 
         if not isinstance(callee, LoxCallable):
-            raise RuntimeError(expr.paren, "Can only call functions and classes.")
+            raise PyLoxRuntimeError(expr.paren, "[Interpreter] Can only call functions and classes.")
 
         function: LoxCallable = callee
 
         if len(arguments) != function.arity():
-            raise RuntimeError(expr.paren, f"Expected {function.arity()} arguments but got {len(arguments)}.")
+            raise PyLoxRuntimeError(expr.paren, f"[Interpreter] Expected {function.arity()} arguments but got {len(arguments)}.")
 
         return function.call(self, arguments)
 
@@ -245,7 +264,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         method = superclass.find_method(expr.method.lexeme)
 
         if method is None:
-            raise RuntimeError(expr.method, f"Undefined property {expr.method.lexeme}.")
+            raise PyLoxRuntimeError(expr.method, f"[Interpreter] Undefined property {expr.method.lexeme}.")
 
         return method.bind(obj)
 
@@ -253,7 +272,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         obj = self._evaluate(expr.obj)
 
         if not isinstance(obj, LoxInstance):
-            raise RuntimeError(expr.name, "Only instances have fields.")
+            raise PyLoxRuntimeError(expr.name, "[Interpreter] Only instances have fields.")
 
         value = self._evaluate(expr.value)
         obj.sett(expr.name, value)
@@ -267,7 +286,7 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         if isinstance(obj, LoxInstance):
             return obj.get(expr.name)
 
-        raise RuntimeError(expr.name, "Only instances have properties.")
+        raise PyLoxRuntimeError(expr.name, "[Interpreter] Only instances have properties.")
 
     def visit_grouping_expr(self, expr: Grouping) -> Expr:
         return self._evaluate(expr.expression)
@@ -276,10 +295,10 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         right = self._evaluate(expr.right)
 
         if expr.operator.token_type == TokenType.MINUS:
-            self._checkNumberOperand(expr.operator, right)
+            self._check_number_operand(expr.operator, right)
             return -float(right)
         elif expr.operator.token_type == TokenType.BANG:
-            return self._is_truthy(right)
+            return not self._is_truthy(right)
 
     def visit_variable_expr(self, expr: Variable) -> object:
         return self._lookup_variable(expr.name, expr)
@@ -289,13 +308,13 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         right = self._evaluate(expr.right)
 
         if expr.operator.token_type == TokenType.MINUS:
-            self._checkNumberOperands(expr.operator, left, right)
+            self._check_number_operands(expr.operator, left, right)
             return float(left) - float(right)
         if expr.operator.token_type == TokenType.SLASH:
-            self._checkNumberOperands(expr.operator, left, right)
+            self._check_number_operands(expr.operator, left, right)
             return left / right
         if expr.operator.token_type == TokenType.STAR:
-            self._checkNumberOperands(expr.operator, left, right)
+            self._check_number_operands(expr.operator, left, right)
             return left * right
         if expr.operator.token_type == TokenType.PLUS:
             if isinstance(left, float) and isinstance(right, float):
@@ -304,19 +323,19 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
             if isinstance(left, str) and isinstance(right, str):
                 return str(left) + str(right)
 
-            raise PyLoxRuntimeError(expr.operator, "Operands must be two numbers or two strings")
+            raise PyLoxRuntimeError(expr.operator, "[Interpreter] Operands must be two numbers or two strings")
 
         if expr.operator.token_type == TokenType.GREATER:
-            self._checkNumberOperands(expr.operator, left, right)
+            self._check_number_operands(expr.operator, left, right)
             return left > right
         if expr.operator.token_type == TokenType.GREATER_EQUAL:
-            self._checkNumberOperands(expr.operator, left, right)
+            self._check_number_operands(expr.operator, left, right)
             return left >= right
         if expr.operator.token_type == TokenType.LESS:
-            self._checkNumberOperands(expr.operator, left, right)
+            self._check_number_operands(expr.operator, left, right)
             return left < right
         if expr.operator.token_type == TokenType.LESS_EQUAL:
-            self._checkNumberOperands(expr.operator, left, right)
+            self._check_number_operands(expr.operator, left, right)
             return left <= right
 
         if expr.operator.token_type == TokenType.BANG_EQUAL:

@@ -37,62 +37,7 @@ class ParseError(Exception):
 
 class Parser:
     """
-    Parses a list of tokens using recursive descent after they have been scanned into statements. 
-    
-    We will use the following grammar:
-
-    program        -> declaration* EOF ;
-
-    declaration    -> classDecl
-                    | funDecl
-                    | varDecl
-                    | statement ;
-
-    classDecl      -> "class" IDENTIFIER ( "<" IDENTIFIER )?
-                    "{" function* "}" ;
-
-    funDecl        -> "fun" function ;
-
-    function       -> IDENTIFIER "(" parameters? ")" block ;
-    parameters     -> IDENTIFIER ( "," IDENTIFIER )* ;
-
-    varDecl        -> "var" IDENTIFIER ( "=" expression )? ";" ;
-
-    statement      -> exprStmt
-                    | forStmt
-                    | ifStmt
-                    | printStmt
-                    | returnStmt
-                    | whileStmt
-                    | block ;
-
-    returnStmt      -> "return" expression? ";" ;
-    forStmt         -> "for" "(" ( varDecl | exprStmt | ";" )
-                    expression? ";"
-                    expression? ")" statement ;
-    whileStmt      -> "while" "(" expression ")" statement ;
-    block          -> "{" declaration* "}" ;
-    exprStmt       -> expression ";"
-    ifStmt         -> "if" "(" expression ")" statement
-                    ( "else" statement )? ;
-    printStmt      -> "print" expression ";" ;
-
-    expression     -> assignment ;
-    assignment     -> ( call "." )? IDENTIFIER "=" assignment
-                    | logic_or ;
-    logic_or       -> logic_and ( "or" logic_and )* ;
-    logic_and      -> equality ( "and" equality )* ;
-    equality       -> comparison ( ( "!=" | "==" ) comparison )* ;
-    comparison     -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-    term           -> factor ( ( "-" | "+" ) factor )* ;
-    factor         -> unary ( ( "/" | "*" ) unary )* ;
-    unary          -> ( "!" | "-" ) unary
-                    | primary ;
-    call           -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
-    arguments      -> expression ( "," expression )* ;
-    primary        -> "true" | "false" | "nil" | "this"
-                    | NUMBER | STRING | IDENTIFIER | "(" expression ")"
-                    | "super" "." IDENTIFIER
+    Parses a list of tokens using recursive descent into statements.
     """
 
     def __init__(self, pylox, tokens: List[Token]):
@@ -309,6 +254,9 @@ class Parser:
         return Expression(expr)
 
     def _function(self, kind: str) -> Function:
+        """
+        function -> IDENTIFIER "(" parameters? ")" block ;
+        """
         name = self._consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
 
         self._consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
@@ -570,7 +518,7 @@ class Parser:
         raise self._error(self._peek(), message)
 
     def _error(self, token_type: TokenType, message: str) -> ParseError:
-        self._pylox.error_token(token_type, message)
+        self._pylox.error_token(token_type, f"[Parser] {message}")
         return ParseError(message)
 
     def _synchronize(self) -> None:

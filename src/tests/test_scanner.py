@@ -30,6 +30,12 @@ yzw += 2 \r\t\r\t\r\t
         self.assertEqual(len(scanner._tokens), 0)
         self.assertTrue(scanner._is_at_end())
 
+    def test_scan_token_multiline_comment(self):
+        scanner = Scanner(None, "/*this is also a comment*/")
+        scanner._scan_token()
+        self.assertEqual(len(scanner._tokens), 0)
+        self.assertTrue(scanner._is_at_end())
+
     def test_scan_token_two_char_token(self):
         scanner = Scanner(None, "==")
         scanner._scan_token()
@@ -73,7 +79,7 @@ yzw += 2 \r\t\r\t\r\t
     def test_scan_token_unexpected_char(self, mock_stdout):
         scanner = Scanner(PyLox, "?")
         scanner._scan_token()
-        self.assertEqual(mock_stdout.getvalue(), "[line 1] Error  : Unexpected character: ?\n")
+        self.assertEqual(mock_stdout.getvalue(), "[line 1] Error  : [Scanner] Unexpected character: ?\n")
 
     def test_is_at_end(self):
         scanner = Scanner(None, "abc")
@@ -85,20 +91,20 @@ yzw += 2 \r\t\r\t\r\t
 
     @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
     def test_add_string(self, mock_stdout):
-        # unterminated string
+        # Unterminated string
         scanner = Scanner(PyLox, '"unterminated')
         scanner._advance()
         scanner._add_string()
-        self.assertEqual(mock_stdout.getvalue(), "[line 1] Error  : Unterminated string\n")
+        self.assertEqual(mock_stdout.getvalue(), "[line 1] Error  : [Scanner] Unterminated string\n")
 
-        # regular string
+        # Regular string
         scanner = Scanner(PyLox, '"hello"')
         scanner._advance()
         scanner._add_string()
         self.assertEqual(len(scanner._tokens), 1)
         self.assertEqual(scanner._tokens[0], Token(TokenType.STRING, '"hello"', "hello", 1))
 
-        # multi-line string
+        # Multi-line string
         scanner = Scanner(PyLox, '"hello\nthere"')
         scanner._advance()
         scanner._add_string()
@@ -106,27 +112,27 @@ yzw += 2 \r\t\r\t\r\t
         self.assertEqual(scanner._tokens[0], Token(TokenType.STRING, '"hello\nthere"', "hello\nthere", 2))
 
     def test_add_digit(self):
-        # integer
+        # Integer
         scanner = Scanner(None, "1015")
         scanner._add_number()
         self.assertEqual(len(scanner._tokens), 1)
         self.assertEqual(scanner._tokens[0], Token(TokenType.NUMBER, "1015", 1015, 1))
 
-        # decimal
+        # Decimal
         scanner = Scanner(None, "1015.2556")
         scanner._add_number()
         self.assertEqual(len(scanner._tokens), 1)
         self.assertEqual(scanner._tokens[0], Token(TokenType.NUMBER, "1015.2556", 1015.2556, 1))
 
     def test_add_identifier(self):
-        # keyword
+        # Keyword
         scanner = Scanner(None, "and")
         scanner._current = 3
         scanner._add_identifier()
         self.assertEqual(len(scanner._tokens), 1)
         self.assertEqual(scanner._tokens[0], Token(TokenType.AND, "and", None, 1))
 
-        # identifier
+        # Identifier
         scanner = Scanner(None, "x1y2z")
         scanner._advance()
         scanner._add_identifier()

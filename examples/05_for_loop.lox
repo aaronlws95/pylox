@@ -1,0 +1,22 @@
+var a = 0;
+var temp;
+print a;
+
+for (var b = 1; a < 10000; b = temp + b) {
+  print a;
+  temp = a;
+  a = b;
+}
+
+
+var out = 0;
+for (var i = 0; i < 10; i = i + 1) out = out + i;
+print(out); // 45
+
+{
+  var i = 0;
+  while (i < 10) {
+    i = i + 1;
+  }
+  print i; // 10
+}

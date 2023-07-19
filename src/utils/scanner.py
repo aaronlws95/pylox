@@ -89,7 +89,7 @@ class Scanner:
         elif c == " " or c == "\t" or c == "\r":
             pass
         else:
-            self._pylox.error_line(self._line, f"Unexpected character: {c}")
+            self._pylox.error_line(self._line, f"[Scanner] Unexpected character: {c}")
 
     def _is_at_end(self) -> bool:
         """
@@ -107,7 +107,7 @@ class Scanner:
             self._advance()
 
         if self._is_at_end():
-            self._pylox.error_line(self._line, "Unterminated string")
+            self._pylox.error_line(self._line, "[Scanner] Unterminated string")
             return
 
         # Closing "

@@ -14,7 +14,7 @@ conda:
 build:
 	$(CONDA_RUN) python3 src/tools/generate_ast.py
 
-unit_test: build
+test: build
 	$(CONDA_RUN) tox -e unittest
 
 coverage: unit_test
@@ -24,4 +24,4 @@ format:
 	$(CONDA_RUN) tox -e format
 	$(CONDA_RUN) tox -e lint
 
-.PHONY: conda format build unit_test coverage
+.PHONY: conda format build test coverage
