@@ -33,22 +33,16 @@ make format
 ## Grammar
 ```bash
 program        -> declaration* EOF ;
-
 declaration    -> classDecl
                 | funDecl
                 | varDecl
                 | statement ;
-
 classDecl      -> "class" IDENTIFIER ( "<" IDENTIFIER )?
                 "{" function* "}" ;
-
 funDecl        -> "fun" function ;
-
 function       -> IDENTIFIER "(" parameters? ")" block ;
 parameters     -> IDENTIFIER ( "," IDENTIFIER )* ;
-
 varDecl        -> "var" IDENTIFIER ( "=" expression )? ";" ;
-
 statement      -> exprStmt
                 | forStmt
                 | ifStmt
@@ -56,7 +50,6 @@ statement      -> exprStmt
                 | returnStmt
                 | whileStmt
                 | block ;
-
 returnStmt      -> "return" expression? ";" ;
 forStmt         -> "for" "(" ( varDecl | exprStmt | ";" )
                 expression? ";"
@@ -67,7 +60,6 @@ exprStmt       -> expression ";"
 ifStmt         -> "if" "(" expression ")" statement
                 ( "else" statement )? ;
 printStmt      -> "print" expression ";" ;
-
 expression     -> assignment ;
 assignment     -> ( call "." )? IDENTIFIER "=" assignment
                 | logic_or ;
