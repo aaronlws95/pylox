@@ -31,10 +31,47 @@ yzw += 2 \r\t\r\t\r\t
         self.assertTrue(scanner._is_at_end())
 
     def test_scan_token_multiline_comment(self):
-        scanner = Scanner(None, "/*this is also a comment*/")
-        scanner._scan_token()
-        self.assertEqual(len(scanner._tokens), 0)
+        scanner = Scanner(
+            None,
+            """ /* this is a multiple line comment
+/* \n
+This is a nested comment \n
+/* \n
+This is another nested comment \n
+*/ \n
+*/ \n
+            */ \n""",
+        )
+        scanner.scan_tokens()
+        self.assertEqual(len(scanner._tokens), 1)
         self.assertTrue(scanner._is_at_end())
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_scan_unterminated_multiline_comment(self, mock_stdout):
+        scanner = Scanner(
+            PyLox,
+            """ /* this is an unterminated multiple line comment
+/* \n
+This is a nested comment \n
+/* \n
+This is another nested comment \n
+*/ \n
+            */ \n""",
+        )
+        scanner.scan_tokens()
+        self.assertEqual(mock_stdout.getvalue(), "[line 1] Error  : [Scanner] Unterminated multi-line comment\n")
+
+    @unittest.mock.patch("sys.stdout", new_callable=io.StringIO)
+    def test_scan_terminated_multiline_comment_with_no_start(self, mock_stdout):
+        scanner = Scanner(
+            PyLox,
+            " /* this is a multiple line comment */ */ ",
+        )
+        scanner.scan_tokens()
+        self.assertEqual(
+            mock_stdout.getvalue(),
+            "[line 1] Error  : [Scanner] Found terminated multi-line comment with no beginning '/*'\n",
+        )
 
     def test_scan_token_two_char_token(self):
         scanner = Scanner(None, "==")

@@ -1,4 +1,4 @@
-from typing import Any, List, Dict
+from typing import Any, Dict, List
 
 from utils.environment import Environment
 from utils.expr import (
@@ -237,7 +237,9 @@ class Interpreter(Expr.Visitor, Stmt.Visitor):
         function: LoxCallable = callee
 
         if len(arguments) != function.arity():
-            raise PyLoxRuntimeError(expr.paren, f"[Interpreter] Expected {function.arity()} arguments but got {len(arguments)}.")
+            raise PyLoxRuntimeError(
+                expr.paren, f"[Interpreter] Expected {function.arity()} arguments but got {len(arguments)}."
+            )
 
         return function.call(self, arguments)
 

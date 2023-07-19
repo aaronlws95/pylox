@@ -17,7 +17,7 @@ build:
 test: build
 	$(CONDA_RUN) tox -e unittest
 
-coverage: unit_test
+coverage: test
 	$(CONDA_RUN) coverage report -m
 
 format: 

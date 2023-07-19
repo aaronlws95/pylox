@@ -5,14 +5,13 @@ print "start"; // start
 
 multiline comment depth = 1
 
-/   *
+/*
 
 multiline comment depth = 2
 
 /* multiline comment depth = 3 */
 
-*   /
-
 */
+
 
 print "end"; // end

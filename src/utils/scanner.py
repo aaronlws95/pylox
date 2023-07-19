@@ -45,34 +45,34 @@ class Scanner:
                     self._advance()
             # Start multi-line comment
             elif c == "/" and self._match("*"):
-                self._nested_comment_depth += 1
-                while (
-                    not (self._peek() == "*" and self._peek_next() == "/")
-                    and not (self._peek() == "/" and self._peek_next() == "*")
-                    and not self._is_at_end()
-                ):
+                nested_lvl = 1
+                line = [self._line]
+                while nested_lvl > 0:
                     cur = self._advance()
                     if cur == "\n":
                         self._line += 1
+
+                    if cur == "/" and self._match("*"):
+                        line.append(self._line)
+                        nested_lvl += 1
+
+                    elif cur == "*" and self._match("/"):
+                        nested_lvl -= 1
+
+                    elif self._is_at_end():
+                        self._pylox.error_line(line[nested_lvl - 1], "[Scanner] Unterminated multi-line comment")
+                        break
             # End multi-line comment
             elif c == "*" and self._match("/"):
-                self._nested_comment_depth -= 1
+                self._pylox.error_line(
+                    self._line, "[Scanner] Found terminated multi-line comment with no beginning '/*'"
+                )
             # Two character tokens
             elif self._match("=") and c + "=" in TokenType._value2member_map_:
                 self._add_token(TokenType(c + "="))
             # Single character tokens
             else:
                 self._add_token(TokenType(c))
-        # Continue multi-line comment if nested
-        elif self._nested_comment_depth > 0:
-            while (
-                not (self._peek() == "*" and self._peek_next() == "/")
-                and not (self._peek() == "/" and self._peek_next() == "*")
-                and not self._is_at_end()
-            ):
-                cur = self._advance()
-                if cur == "\n":
-                    self._line += 1
         # New line
         elif c == "\n":
             self._line += 1
