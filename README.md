@@ -78,3 +78,34 @@ primary        -> "true" | "false" | "nil" | "this"
                 | "super" "." IDENTIFIER
 ```
 
+## Test Coverage
+```bash
+Name                            Stmts   Miss  Cover
+---------------------------------------------------
+src/pylox.py                       76     42    45%
+src/tests/__init__.py               0      0   100%
+src/tests/test_ast_printer.py       0      0   100%
+src/tests/test_parser.py           57      0   100%
+src/tests/test_scanner.py         159      0   100%
+src/tests/test_token.py            11      0   100%
+src/utils/__init__.py               0      0   100%
+src/utils/ast_printer.py           87     58    33%
+src/utils/environment.py           32     18    44%
+src/utils/expr.py                 116     43    63%
+src/utils/interpreter.py          213    162    24%
+src/utils/lox_callable.py          12      3    75%
+src/utils/lox_class.py             27     17    37%
+src/utils/lox_function.py          31     19    39%
+src/utils/lox_instance.py          16     10    38%
+src/utils/lox_native.py            10      3    70%
+src/utils/parser.py               275    146    47%
+src/utils/resolver.py             154    108    30%
+src/utils/return_exception.py       4      2    50%
+src/utils/runtime_error.py          6      3    50%
+src/utils/scanner.py              117      0   100%
+src/utils/stmt.py                  90     36    60%
+src/utils/token.py                 13      1    92%
+src/utils/token_type.py            41      0   100%
+---------------------------------------------------
+TOTAL                            1547    671    57%
+```
