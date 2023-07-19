@@ -1,0 +1,20 @@
+var a = "global";
+{
+  fun showA() {
+    print a;
+  }
+
+  showA(); // global
+  var a = "block";
+  showA(); // should be global not block
+}
+
+var temp = a; // Run the initializer.
+var a;        // Declare the variable.
+a = temp;     // Initialize it.
+
+print temp; // global
+
+var b; // Define the variable.
+b = b; // Run the initializer.
+print b; // nil

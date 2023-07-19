@@ -8,7 +8,6 @@ for (var b = 1; a < 10000; b = temp + b) {
   a = b;
 }
 
-
 var out = 0;
 for (var i = 0; i < 10; i = i + 1) out = out + i;
 print(out); // 45
